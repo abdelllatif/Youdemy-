@@ -1,0 +1,123 @@
+classDiagram
+    direction LR
+    
+    %% Inheritance relationships
+    User <|-- Teacher : extends
+    User <|-- Student : extends
+    User <|-- Admin : extends
+    
+    %% Containment and associations
+    Playlist "1" *-- "*" Video : contains
+    
+    %% Teacher to Playlist relationship
+    Teacher "1" -- "*" Playlist : creates
+    
+    %% Student to Playlist relationship
+    Student "*" -- "*" Playlist : enrolls in
+    
+    class User {
+        -id: int
+        -name: varchar
+        -email: varchar
+        -password: varchar
+        -role: enum
+        -avatar_path: varchar
+        -bio: text
+        -status: enum
+        -created_at: timestamp
+        +register()
+        +login()
+        +updateProfile()
+        +deactivateAccount()
+    }
+    
+    class Teacher {
+        -expertise: varchar
+        -followers_count: int
+        -is_verified: bool
+        +createCourse()
+        +updateCourse()
+        +deleteCourse()
+        +viewStatistics()
+    }
+    
+    class Student {
+        -enrolled_courses: List[Playlist]
+        +viewCourseCatalog()
+        +searchCourses(keyword: str)
+        +viewCourseDetails(course_id: int)
+        +enrollInCourse(course_id: int)
+        +unenrollFromCourse(course_id: int)
+        +updateEnrollmentStatus(course_id: int, status: string)
+        +viewEnrolledCourses()
+        +getEnrollmentStatus(course_id: int)
+    }
+    
+    class Admin {
+        +validateTeacherAccount(teacherId: int)
+        +manageUsers()
+        +manageContent()
+        +addTag()
+        +removeTag()
+        +updateTag()
+        +getAllTags()
+        +addCategory()
+        +removeCategory()
+        +updateCategory()
+        +getAllCategories()
+        +viewGlobalStatistics()
+    }
+    
+    class Playlist {
+        -id: int
+        -teacher_id: int
+        -category: string
+        -title: varchar
+        -description: text
+        -level: enum
+        -thumbnail_path: varchar
+        -students_count: int
+        -likes_count: int
+        -is_published: bool
+        -created_at: timestamp
+        -updated_at: timestamp
+        -tags: List~string~
+        -requirements: List~string~
+        -learnings: List~string~
+        -enrolled_students: List~Student~
+        +createPlaylist()
+        +updatePlaylist()
+        +deletePlaylist()
+        +addRequirement()
+        +removeRequirement()
+        +updateRequirement()
+        +addLearning()
+        +removeLearning()
+        +updateLearning()
+        +likePlaylist()
+        +unlikePlaylist()
+        +addTag()
+        +removeTag()
+        +getPlaylistDetails()
+        +reviewPlaylist()
+        +updateReview()
+        +deleteReview()
+        +getEnrolledStudents()
+        +updateEnrollmentStatus(student_id: int, status: string)
+    }
+    
+    class Video {
+        -id: int
+        -playlist_id: int
+        -title: varchar
+        -description: text
+        -video_path: varchar
+        -duration: int
+        -order_number: int
+        -created_at: timestamp
+        -updated_at: timestamp
+        +addVideo()
+        +updateVideo()
+        +deleteVideo()
+        +getVideosByPlaylist(playlist_id: int)
+    }

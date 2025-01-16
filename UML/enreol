@@ -1,0 +1,176 @@
+@startuml
+
+class User {
+    - id: int
+    - name: varchar
+    - email: varchar
+    - password: varchar
+    - role: enum (admin, teacher, student)
+    - avatar_path: varchar
+    - bio: text
+    - status: enum (active, suspended, deleted)
+    - created_at: timestamp
+    + register()
+    + login()
+    + updateProfile()
+    + deactivateAccount()
+}
+
+class Teacher {
+    - expertise: varchar
+    - followers_count: int
+    - is_verified: bool
+    + createCourse()
+    + updateCourse()
+    + deleteCourse()
+    + viewStatistics()
+}
+
+class Student {
+    - enrolled_courses: List[Playlist]
+    + viewCourseCatalog()
+    + searchCourses(keyword: str)
+    + viewCourseDetails(course_id: int)
+    + enrollInCourse(course_id: int)
+    + viewEnrolledCourses()
+}
+
+class Admin {
+    + validateTeacherAccount(teacherId: int)
+    + manageUsers()
+    + manageContent()
+    + manageTags()
+    + manageCategories()
+    + viewGlobalStatistics()
+}
+
+class Category {
+    - id: int
+    - name: varchar
+    + addCategory()
+    + updateCategory()
+    + deleteCategory()
+    + getAllCategories()
+}
+
+class Tag {
+    - id: int
+    - name: varchar
+    + addTag()
+    + updateTag()
+    + deleteTag()
+    + getAllTags()
+}
+
+class Playlist {
+    - id: int
+    - teacher_id: int
+    - category_id: int
+    - title: varchar
+    - description: text
+    - level: enum (beginner, intermediate, advanced)
+    - thumbnail_path: varchar
+    - students_count: int
+    - likes_count: int
+    - is_published: bool
+    - created_at: timestamp
+    - updated_at: timestamp
+    - tags: List<Tag>
+    + createPlaylist()
+    + updatePlaylist()
+    + deletePlaylist()
+    + addTag(tag: Tag)
+    + removeTag(tag: Tag)
+    + getPlaylistDetails()
+}
+
+class Requirement {
+    - id: int
+    - playlist_id: int
+    - requirement: text
+    + addRequirement()
+    + updateRequirement()
+    + deleteRequirement()
+    + getRequirementsByPlaylist(playlist_id: int)
+}
+
+class Learning {
+    - id: int
+    - playlist_id: int
+    - learning: text
+    + addLearning()
+    + updateLearning()
+    + deleteLearning()
+    + getLearningsByPlaylist(playlist_id: int)
+}
+
+class Video {
+    - id: int
+    - playlist_id: int
+    - title: varchar
+    - description: text
+    - video_path: varchar
+    - duration: int
+    - order_number: int
+    - created_at: timestamp
+    - updated_at: timestamp
+    + addVideo()
+    + updateVideo()
+    + deleteVideo()
+    + getVideosByPlaylist(playlist_id: int)
+}
+
+class Enrollment {
+    - id: int
+    - playlist_id: int
+    - student_id: int
+    - status: enum (active, completed, dropped)
+    - access_enabled: bool
+    + enrollStudent()
+    + updateEnrollmentStatus()
+    + getEnrollmentsByPlaylist(playlist_id: int)
+    + getEnrollmentsByStudent(student_id: int)
+}
+
+class PlaylistLike {
+    - id: int
+    - playlist_id: int
+    - user_id: int
+    - created_at: timestamp
+    + likePlaylist()
+    + unlikePlaylist()
+    + getLikesByPlaylist(playlist_id: int)
+    + getLikesByUser(user_id: int)
+}
+
+class PlaylistReview {
+    - id: int
+    - playlist_id: int
+    - student_id: int
+    - rating: int (1 to 5)
+    - comment: text
+    - created_at: timestamp
+    - updated_at: timestamp
+    + addReview()
+    + updateReview()
+    + deleteReview()
+    + getReviewsByPlaylist(playlist_id: int)
+    + getReviewsByStudent(student_id: int)
+}
+
+User <|-- Teacher
+User <|-- Student
+User <|-- Admin
+
+Playlist "1" --> "*" Tag
+Playlist "1" --> "*" Video
+Playlist "1" --> "*" Enrollment
+Playlist "1" --> "*" PlaylistLike
+Playlist "1" --> "*" PlaylistReview
+Playlist "1" --> "*" Requirement
+Playlist "1" --> "*" Learning
+
+Category "1" --> "*" Playlist
+Tag "1" --> "*" Playlist
+
+@enduml
