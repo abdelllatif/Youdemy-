@@ -32,8 +32,8 @@ class User {
   
     public function SetUser() {
         $password_hash = $this->hashPassword(); 
-        $query = "INSERT INTO users (Last_name, First_name, email, password, role, avatar_path, bio, status) 
-                  VALUES (:Last_name, :First_name, :email, :password, :role, :avatar_path, :bio, :status)";
+        $query = "INSERT INTO users (Last_name, First_name, email, password, role, avatar_path, status) 
+                  VALUES (:Last_name, :First_name, :email, :password, :role, :avatar_path, :status)";
         try {
             $stmt = $this->pdo->getConnection()->prepare($query);
     
@@ -43,7 +43,6 @@ class User {
             $stmt->bindParam(':password', $password_hash);
             $stmt->bindParam(':role', $this->role);
             $stmt->bindParam(':avatar_path', $this->avatar_path);
-            $stmt->bindParam(':bio', $this->bio);
             $stmt->bindParam(':status', $this->status);
     
             if ($stmt->execute()) {
@@ -61,8 +60,9 @@ class User {
 
     public static function login($email, $password) {
         $pdo = new Data();
-        $pdo->Connection(); 
-        $connection = $pdo->getConnection(); 
+        $pdo->Connection();
+        $connection = $pdo->getConnection();
+
         $query = "SELECT * FROM users WHERE email = :email";
         
         try {
@@ -73,29 +73,22 @@ class User {
             if ($stmt->rowCount() > 0) {
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (password_verify($password, $user['password'])) {
-                    session_start();
                     $_SESSION['client'] = [
-                    'id'=>$user['id'],
-                    'role'=>$user['role'],
-                    'role'=>$user['role'],
-                ];
+                        'id' => $user['id'],
+                        'role' => $user['role']
+                    ];
+
                     echo "Login successful!";
-                    if($user['role']=='admin'){
-                    header('location:../../ADMIN/Frontend/dhashebored.php');
-                    return ;
-                    }
-                    elseif($user['role']=='teacher'&& $user['is_approved']=1){
-                    header('location:../../professor/Frontend/teacher.php');
-                    return ;
-                    }
-                    elseif($user['role']=='student'){
+                    if ($user['role'] == 'admin') {
+                        header('location:../../ADMIN/Frontend/dhashebored.php');
+                    } elseif ($user['role'] == 'teacher' && $user['is_approved'] == 'approved') {
+                        header('location:../../professor/Frontend/teacher.php');
+                    } elseif ($user['role'] == 'student') {
                         header('location:../../index.php');
-                        return ;
-                        }
-                        else {
-                            echo "no student here.";
-                            return false;
-                        }
+                    } else {
+                        echo "Invalid user role.";
+                        return false;
+                    }
                 } else {
                     echo "Invalid email or password.";
                     return false;
@@ -107,6 +100,42 @@ class User {
         } catch (PDOException $e) {
             echo "Error: " . $e->getMessage();
             return false;
+        }
+    }
+
+    public static function logout() {
+        session_start();
+        session_destroy();
+        header('location:../../../Login/frontend/singin.php');
+    }
+    public function getProfile($userId) {
+        $query = "SELECT * FROM users WHERE id = :userId";
+        try {
+            $stmt = $this->pdo->getConnection()->prepare($query);
+            $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+            $stmt->execute();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+            if ($user) {
+                return $user;
+            } else {
+                return null; // Return null if user not found
+            }
+        } catch (PDOException $e) {
+            echo "Error: " . $e->getMessage();
+            return null;
+        }
+    }
+    
+    public function get_All_users() {
+        $query = "SELECT * FROM users";
+        try {
+            $stmt = $this->pdo->getConnection()->prepare($query);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            echo "Error: " . $e->getMessage();
+            return [];
         }
     }
 }

@@ -40,5 +40,13 @@ class Tag {
             return ; 
         }
     }
+    public function deleteTag($tagId) {
+        $pdo = new Data();
+        $pdo->Connection();
+        $query = "DELETE FROM tags WHERE id = :tagId";
+        $stmt = $pdo->getConnection()->prepare($query);
+        $stmt->bindParam(':tagId', $tagId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
 ?>

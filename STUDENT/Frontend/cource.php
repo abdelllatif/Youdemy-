@@ -1,4 +1,5 @@
 <?php 
+session_start();
 require_once '../Backend/test.php';
 require_once '../Backend/vedio.php';
 
@@ -115,9 +116,10 @@ require_once '../Backend/vedio.php';
             </div>
         </div>
         
-         <!-- Course Grid for Video view-->
-         <div id="courseGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <?php foreach ($videos as $video): ?>
+       <!-- Course Grid for Video view-->
+<div id="courseGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+<?php foreach ($videos as $video): ?>
         <article class="course-card bg-gray-800 rounded-xl overflow-hidden">
             <div class="relative">
                 <!-- Thumbnail -->
@@ -131,15 +133,31 @@ require_once '../Backend/vedio.php';
                 <!-- Title -->
                 <h3 class="text-lg font-semibold mb-2 text-white"><?= htmlspecialchars($video['title']); ?></h3>
                 
+                <!-- Categories -->
+                <div class="flex flex-wrap gap-2 mb-2">
+                    <?php if (is_array($video['categories'])): ?>
+                        <?php foreach ($video['categories'] as $category): ?>
+                            <span class="bg-blue-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($category); ?></span>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <span class="bg-blue-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($video['categories'] ?? 'Category'); ?></span>
+                    <?php endif; ?>
+                </div>
+                
                 <!-- Tags -->
                 <div class="flex flex-wrap gap-2 mb-2">
-                    <span class="bg-blue-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($video['category'] ?? 'Category'); ?></span>
-                    <span class="bg-purple-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($video['level'] ?? 'Level'); ?></span>
+                    <?php if (is_array($video['tags'])): ?>
+                        <?php foreach ($video['tags'] as $tag): ?>
+                            <span class="bg-green-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($tag); ?></span>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <span class="bg-green-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($video['tags'] ?? 'Tag'); ?></span>
+                    <?php endif; ?>
                 </div>
                 
                 <!-- Teacher Information -->
                 <div class="flex items-center mb-2">
-                    <img src="../../<?= htmlspecialchars($video['avatar_path']); ?>" alt="Teacher Avatar" class="w-8 h-8 rounded-full mr-2">
+                    <img src="../../Uploads/<?= htmlspecialchars($video['avatar_path']); ?>" alt="Teacher Avatar" class="w-8 h-8 rounded-full mr-2">
                     <span class="text-sm text-gray-400"><?= htmlspecialchars($video['first_name'] . ' ' . $video['last_name']); ?> - <?= htmlspecialchars(ucfirst($video['role'])); ?></span>
                 </div>
                 
@@ -155,29 +173,38 @@ require_once '../Backend/vedio.php';
                 <div class="mb-2">
                     <h4 class="text-sm font-medium text-gray-400">Learning Objectives:</h4>
                     <ul class="text-sm text-gray-300 list-disc list-inside">
-                        <li><?= htmlspecialchars($video['objective_1'] ?? 'Objective 1'); ?></li>
-                        <li><?= htmlspecialchars($video['objective_2'] ?? 'Objective 2'); ?></li>
+                        <?php foreach ($video['learning'] as $objective): ?>
+                            <li><?= htmlspecialchars($objective); ?></li>
+                        <?php endforeach; ?>
                     </ul>
                 </div>
-                <form action="vedio.php" method="POST">
-    <input name="idved" type="hidden" value="<?php echo htmlspecialchars($video['id']); ?>">
-    <button type="submit" class="text-blue-400 text-sm hover:text-blue-300">View Details →</button>
-</form>
+
+                <!-- View Details Button -->
+                
+                    <?php if(!isset($_SESSION['client']) || $_SESSION['client']['role'] !== 'student'): ?>
+                        <span class="text-red-500 font-semibold text-sm bg-yellow-200 p-2 rounded-md">Veuillez vous connecter pour participer</span>
+                    <?php else: ?>
+                        <form action="../Backend/vedio_specific.php" method="POST">
+                    <input name="idved" type="hidden" value="<?= htmlspecialchars($video['id']); ?>">
+                    <input name="rejoindre" type="hidden" value=1>
+                        <button type="submit" class="text-blue-400 text-sm hover:text-blue-300">Rejoindre ce cours →</button>
+                        </form>
+                        <?php endif ?>
             </div>
         </article>
     <?php endforeach; ?>
 </div>
     </div>
     
-  <!-- Document Grid -->
+<!-- Document Grid -->
 <div id="documentsContent" class="grid grid-cols-1 hidden sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-    <?php foreach ($result as $resul): ?>
+    <?php foreach ($documents as $document): ?>
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:scale-105 transition duration-300">
         <div class="p-6">
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center space-x-4">
                     <?php
-                    $filePath = $resul['document_path'] ?? '';
+                    $filePath = $document['document_path'] ?? '';
                     $fileExtension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
                     ?>
                     <?php if ($fileExtension === 'pdf'): ?>
@@ -189,30 +216,66 @@ require_once '../Backend/vedio.php';
                     <?php endif; ?>
                     <div>
                         <h2 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                            <?= htmlspecialchars($resul['title']); ?>
+                            <?= htmlspecialchars($document['title']); ?>
                         </h2>
                         <p class="text-sm text-gray-500 dark:text-gray-400">
-                            <?= htmlspecialchars($resul['first_name'] . ' ' . $resul['last_name']); ?>
+                            <?= htmlspecialchars($document['first_name'] . ' ' . $document['last_name']); ?>
                         </p>
                     </div>
                 </div>
             </div>
-
+             
             <!-- Document Description -->
             <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                <?= htmlspecialchars($resul['description']); ?>
+                <?= htmlspecialchars($document['description']); ?>
             </p>
+
+            <!-- Learning Objectives -->
+            <?php if (!empty($document['learning'])): ?>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <h4 class="font-semibold">Learning Objectives:</h4>
+                <ul class="list-disc pl-5">
+                    <?php foreach ($document['learning'] as $learning): ?>
+                    <li><?= htmlspecialchars($learning); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Categories -->
+            <?php if (!empty($document['categories'])): ?>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <h4 class="font-semibold">Categories:</h4>
+                <ul class="flex flex-wrap gap-2">
+                    <?php foreach ($document['categories'] as $category): ?>
+                    <li class="bg-blue-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($category); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <!-- Tags -->
+            <?php if (!empty($document['tags'])): ?>
+            <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                <h4 class="font-semibold">Tags:</h4>
+                <ul class="flex flex-wrap gap-2">
+                    <?php foreach ($document['tags'] as $tag): ?>
+                    <li class="bg-green-600 text-xs px-2 py-1 rounded"><?= htmlspecialchars($tag); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
 
             <!-- Document Details -->
             <div class="space-y-3 text-sm text-gray-500 dark:text-gray-400">
                 <p class="flex items-center">
                     <i class="fas fa-calendar-alt w-5 text-gray-400 dark:text-gray-500"></i>
-                    <span>Created: <?= date('M d, Y', strtotime($resul['created_at'])); ?></span>
+                    <span>Created: <?= date('M d, Y', strtotime($document['created_at'])); ?></span>
                 </p>
-                <?php if (!empty($resul['updated_at'])): ?>
+                <?php if (!empty($document['updated_at'])): ?>
                 <p class="flex items-center">
                     <i class="fas fa-clock w-5 text-gray-400 dark:text-gray-500"></i>
-                    <span>Updated: <?= date('M d, Y', strtotime($resul['updated_at'])); ?></span>
+                    <span>Updated: <?= date('M d, Y', strtotime($document['updated_at'])); ?></span>
                 </p>
                 <?php endif; ?>
             </div>
@@ -221,32 +284,30 @@ require_once '../Backend/vedio.php';
         <!-- Document Footer -->
         <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                <img class="rounded-full w-10 h-10" src="../../<?= htmlspecialchars($resul['avatar_path']); ?>" alt="">
+                <img class="rounded-full w-10 h-10" src="../../Uploads/<?= htmlspecialchars($document['avatar_path']); ?>" alt="">
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     <i class="fas fa-user-shield"></i>
-                    <?= htmlspecialchars(ucfirst($resul['role'])); ?>
+                    <?= htmlspecialchars(ucfirst($document['role'])); ?>
                 </span>
             </div>
 
-            <div class="flex space-x-2">
-                <!-- View Button -->
-                <a href="<?= htmlspecialchars($resul['document_path']); ?>" target="_blank" 
-                   class="px-4 py-2 bg-green-500 text-white text-sm font-semibold rounded-lg hover:bg-green-600 focus:ring-2 focus:ring-green-300 transition">
-                    <i class="fas fa-eye"></i>
-                </a>
-
-                <!-- Download Button -->
-                <a href="<?= htmlspecialchars($resul['document_path']); ?>" download
-                   class="px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-lg hover:bg-blue-600 focus:ring-2 focus:ring-blue-300 transition">
-                    <i class="fas fa-download"></i>
-                </a>
-            </div>
+            <!-- Join Course Button -->
+            
+                <?php if(!isset($_SESSION['client']) || $_SESSION['client']['role'] !== 'student'): ?>
+                 
+                    <span class="text-red-500 font-semibold text-sm bg-yellow-200 p-2 rounded-md"> connecter pour participer</span>
+                  
+                    <?php else: ?>
+                        <form action="../Backend/document.php" method="POST">
+                        <input name="iddoc" type="hidden" value="<?= htmlspecialchars($document['id']); ?>">
+                        <input name="rejoindre" type="hidden" value=1>
+                        <button type="submit" class="text-blue-400 text-sm hover:text-blue-300">Rejoindre ce cours →</button>
+                        </form>
+                        <?php endif ?>
         </div>
     </div>
     <?php endforeach; ?>
 </div>
-
-
         
 
 

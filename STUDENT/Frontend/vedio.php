@@ -2,16 +2,15 @@
 session_start();
 require_once '../../Classes/class_course_content.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $id = isset($_POST['idved']) ? $_POST['idved'] : null;
+if (isset($_GET['iddoc'])) {
+    $id = intval($_GET['iddoc']);
 
     $document = new VideoHandler();
-    $vedio = $document->afficherbyid(6);
+    $vedio = $document->afficherbyid($id);
 
 
     if (is_array($vedio) && count($vedio) > 0) {
-        $vedio = $vedio[0];
-
+        $vedio = $vedio;
         if (isset($vedio['title'], $vedio['video_path'], $vedio['description'])) {
 ?>
 
@@ -98,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p class="mt-4 text-lg text-indigo-200">Learn Python from scratch and build your own projects</p>
         </div>
     </div>
-
     <!-- Course Content -->
     <div class="max-w-7xl mx-auto px-4 py-12">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -113,33 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </video>
                     </div>
                 </div>
+                <?= htmlspecialchars($vedio['video_path']) ?> 
             </div>
 
-            <!-- Playlist Section -->
-            <div class="lg:col-span-1">
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 playlist">
-                    <h3 class="text-xl font-bold mb-4 dark:text-white">Course Content</h3>
-                    <div id="playlist" class="space-y-4">
-                        <!-- Lecture 1 -->
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer" onclick="changeVideo('path-to-video1.mp4')">
-                            <div class="flex items-center space-x-4">
-                                <i class="fas fa-play-circle text-gray-400"></i>
-                                <span class="text-gray-600 dark:text-gray-300">1. Welcome to the Course</span>
-                            </div>
-                            <span class="text-sm text-gray-500">5:30</span>
-                        </div>
-                        <!-- Lecture 2 -->
-                        <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg cursor-pointer" onclick="changeVideo('path-to-video2.mp4')">
-                            <div class="flex items-center space-x-4">
-                                <i class="fas fa-play-circle text-gray-400"></i>
-                                <span class="text-gray-600 dark:text-gray-300">2. Installing Python</span>
-                            </div>
-                            <span class="text-sm text-gray-500">8:15</span>
-                        </div>
-                        <!-- More lectures... -->
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Instructor Info Section -->
@@ -174,7 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
         </div>
-
+      
         <!-- Course Description -->
         <div class="mt-12">
             <div class="prose dark:prose-invert max-w-none mb-8">
@@ -184,14 +158,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h3 class="text-xl font-bold mb-3 dark:text-white">What you'll learn</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                     <div class="flex items-start space-x-2">
-                        <i class="fas fa-check text-green-500 mt-1"></i>
-                        <span class="text-gray-600 dark:text-gray-300">Learn Python from beginner to advanced</span>
+                    <?php foreach ($vedio['learning'] as $objective): ?>
+                      <i class="fas fa-check text-green-500 mt-1"></i>
+                      <span class="text-gray-600 dark:text-gray-300"><?= htmlspecialchars($objective); ?></span>
+                  <?php endforeach; ?>
                     </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fas fa-check text-green-500 mt-1"></i>
-                        <span class="text-gray-600 dark:text-gray-300">Build 5 real-world Python projects</span>
-                    </div>
-                    <!-- More learning points... -->
                 </div>
 
 

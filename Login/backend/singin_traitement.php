@@ -9,10 +9,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
         $email = $_SESSION['user']['email'];
         $password = $_SESSION['user']['password'];
     } 
-    var_dump($_SESSION['user']['first_name']);
-    echo '<br>';
-    var_dump($_SESSION['user'])     ;
-var_dump($_POST['role']);
+
 $role=$_POST['role']; 
 $user= new user($first_name,$last_name,$email,$password,$role);
 $user -> SetUser($first_name,$last_name,$email,$password,$role);

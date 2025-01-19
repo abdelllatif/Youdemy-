@@ -39,5 +39,13 @@ class categorie {
             return ; 
         }
     }
+  public  function deleteCategory($categoryId) {
+        $pdo = new Data();
+        $pdo->Connection();
+        $query = "DELETE FROM categories WHERE id = :categoryId";
+        $stmt = $pdo->getConnection()->prepare($query);
+        $stmt->bindParam(':categoryId', $categoryId, PDO::PARAM_INT);
+        return $stmt->execute();
+    }
 }
 ?>

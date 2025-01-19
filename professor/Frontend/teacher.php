@@ -14,7 +14,7 @@
 // }
 require_once '../Backend/get_all_tags.php';
 require_once '../Backend/get_all_categorie.php';
-
+require_once '../Backend/get_all_documents.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -214,210 +214,234 @@ require_once '../Backend/get_all_categorie.php';
             <button id="showDocuments" class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600">Documents</button>
         </div>
 
-        <!-- Videos Section -->
-        <div id="videosContent" class="">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        <article class="course-card bg-gray-800 rounded-xl overflow-hidden">
-                            <div class="relative">
-                                <img src="video-thumbnail.jpg" alt="Video thumbnail" class="w-full h-48 object-cover">
-                                <span class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded">15:30</span>
-                            </div>
-                            <div class="p-4">
-                                <h3 class="text-lg font-semibold mb-2">Introduction to Web Development</h3>
-                                <div class="mb-2">
-                                    <div class="flex flex-wrap gap-2 mb-2">
-                                        <span class="bg-blue-600 text-xs px-2 py-1 rounded">Web Dev</span>
-                                        <span class="bg-purple-600 text-xs px-2 py-1 rounded">Beginner</span>
-                                    </div>
-                                </div>
-                                <div class="mb-2">
-                                    <h4 class="text-sm font-medium text-gray-400">Learning Objectives:</h4>
-                                    <ul class="text-sm text-gray-300 list-disc list-inside">
-                                        <li>HTML Basics</li>
-                                        <li>CSS Fundamentals</li>
-                                    </ul>
-                                </div>
-                                <a href="video-details.html" class="text-blue-400 text-sm hover:text-blue-300">View Details →</a>
-                                <div class="flex justify-between mt-4">
-                                    <button onclick="editVideo('videoId')" class="text-yellow-500">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deleteVideo('videoId')" class="text-red-500">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </article>
-                        
-                        <!-- More video cards... -->
+        // In the videosContent div, replace the static content with:
+<div id="videosContent" class="">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <?php
+        // Create instance of your class that has the getTeacherVideos method
+
+        foreach($videos as $video): ?>
+            <article class="course-card bg-gray-800 rounded-xl overflow-hidden">
+                <div class="relative">
+                    <img src="<?php echo htmlspecialchars($video['thumbnail_path']); ?>" alt="Video thumbnail" class="w-full h-48 object-cover">
+                    <span class="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded">
+                        <?php echo htmlspecialchars($video['duration']); ?>
+                    </span>
+                </div>
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold mb-2"><?php echo htmlspecialchars($video['title']); ?></h3>
+                    <div class="mb-2">
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <?php foreach($video['categories'] as $category): ?>
+                                <span class="bg-blue-600 text-xs px-2 py-1 rounded">
+                                    <?php echo htmlspecialchars($category); ?>
+                                </span>
+                            <?php endforeach; ?>
+                            <?php foreach($video['tags'] as $tag): ?>
+                                <span class="bg-purple-600 text-xs px-2 py-1 rounded">
+                                    <?php echo htmlspecialchars($tag); ?>
+                                </span>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
-                    <button id="addNewVideoBtn" class="mt-8 px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-500">
-                        Add New Video
-                    </button>
-                </div>
-
-                <!-- Documents Section -->
-                <div id="documentsContent" class="hidden">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <article class="course-card bg-gray-800 rounded-xl overflow-hidden">
-            <div class="p-4">
-                <div class="flex justify-center mb-4">
-                    <i class="fas fa-file-pdf text-4xl text-red-500"></i>
-                </div>
-                <h3 class="text-lg font-semibold mb-2">Web Development Guide</h3>
-                <div class="mb-2">
-                    <div class="flex flex-wrap gap-2 mb-2">
-                        <span class="bg-green-600 text-xs px-2 py-1 rounded">Documentation</span>
-                        <span class="bg-yellow-600 text-xs px-2 py-1 rounded">Guide</span>
+                    <div class="mb-2">
+                        <h4 class="text-sm font-medium text-gray-400">Learning Objectives:</h4>
+                        <ul class="text-sm text-gray-300 list-disc list-inside">
+                            <?php foreach($video['learning'] as $objective): ?>
+                                <li><?php echo htmlspecialchars($objective); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
                     </div>
-                </div>
-                <div class="mb-2">
-                    <h4 class="text-sm font-medium text-gray-400">Learning Objectives:</h4>
-                    <ul class="text-sm text-gray-300 list-disc list-inside">
-                        <li>Understanding Documentation</li>
-                        <li>Best Practices</li>
-                    </ul>
-                </div>
-                <a href="document-details.html" class="text-green-400 text-sm hover:text-green-300">View Details →</a>
-                <div class="flex justify-between mt-4">
-                    <button onclick="editDocument('documentId')" class="text-yellow-500">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button onclick="deleteDocument('documentId')" class="text-red-500">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-        </article>
-
-                <!-- More document cards... -->
-            </div>
-            <button id="addNewDocBtn" class="mt-8 px-6 py-3 bg-green-600 text-white rounded hover:bg-green-500">
-                Add New Document
-            </button>
-        </div>
-
-     <!-- Add Video Modal -->
-            <!-- Add Video Modal -->
-            <div id="addVideoModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
-                <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold">Add New Video</h2>
-                        <button class="closeModal text-gray-400 hover:text-white">
-                            <i class="fas fa-times text-xl"></i>
+                    <div class="flex justify-between mt-4">
+                        <button onclick="editVideo(<?php echo $video['id']; ?>)" class="text-yellow-500">
+                            <i class="fas fa-edit"></i>
                         </button>
+                        <form action="../../ADMIN/backend/suspend_course.php" method="POST" style="display:inline;">
+                        <input type="hidden" name="course_id" value="<?php echo $video['id']; ?>">
+                        <input type="hidden" name="type" value="video">
+                        <button class="text-red-500">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        </form>
                     </div>
-                    <form id="addVideoForm" class="space-y-6" action="../Backend/set_vedio_to_db.php" method="POST" enctype="multipart/form-data">
-                        <!-- Basic Information -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Video Title</label>
-                            <input name="title" type="text" class="w-full rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
-                        </div>
-
-                        <!-- Video Upload -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Video File</label>
-                            <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-                                <input name="video" type="file" id="videoUpload" accept="video/*" class="hidden">
-                                <label for="videoUpload" class="cursor-pointer">
-                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
-                                    <p class="text-gray-400">Click to upload</p>
-                                    <p class="text-sm text-gray-500">MP4, MP3 or Ogg (MAX. 800MB)</p>
-                                </label>
-                            </div>
-                        </div>
-
-                        <!-- Thumbnail -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Thumbnail</label>
-                            <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-                                <input name="thumbnail" type="file" id="thumbnailUpload" accept="image/*" class="hidden">
-                                <label for="thumbnailUpload" class="cursor-pointer">
-                                    <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
-                                    <p class="text-gray-400">Click to upload thumbnail</p>
-                                    <p class="text-sm text-gray-500">JPG, PNG or GIF (MAX. 2MB)</p>
-                                </label>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Video Duration</label>
-                            <div class="flex space-x-2">
-                                <input name="duration_hours" type="number" min="0" max="3" placeholder="Hours" class="w-1/3 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
-                                <input name="duration_minutes" type="number" min="0" max="59" placeholder="Minutes" class="w-1/3 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
-                                <input name="duration_seconds" type="number" min="0" max="59" placeholder="Seconds" class="w-1/3 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
-                            </div>
-                        </div>
-                        <!-- Categories -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Categories</label>
-                            <div class="flex flex-wrap gap-2 mb-2" id="videoCategories"></div>
-                            <div class="flex gap-2">
-                            <div id="selectcategorie"></div>
-                            <select id="videoCategorySelect" class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2">
-                                <option value="" disabled selected>Select category</option>
-                                    <?php foreach($result as $category): ?>
-                                        <option value="<?php echo htmlspecialchars($category['id']); ?>"><?php echo htmlspecialchars($category['name']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button type="button" onclick="addCategory('video')" 
-                                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
-                                    Add
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Tags -->
-               <!-- Tags -->
-<div>
-    <label class="block text-sm font-medium text-gray-300 mb-2">Tags</label>
-    <div class="flex flex-wrap gap-2 mb-2" id="videoTags"></div>
-    <div class="flex gap-2">
-        <div id="selecttags"></div>
-        <select id="videoTAGSelect" class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2">
-            <option value="" disabled selected>Select tag</option>
-            <?php foreach($result2 as $tag): ?>
-                <option value="<?php echo htmlspecialchars($tag['id']); ?>"><?php echo htmlspecialchars($tag['name']); ?></option>
-            <?php endforeach; ?>
-        </select>
-        <button type="button" onclick="addTag('video')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
-            Add
-        </button>
+                </div>
+            </article>
+        <?php endforeach; ?>
     </div>
 </div>
 
-                        <!-- Learning Objectives -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Learning Objectives</label>
-                            <div class="space-y-2 mb-2" id="videoLearningObjectives"></div>
-                            <div class="flex gap-2">
-                                <input type="text" id="videoObjectiveInput" 
-                                       class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" 
-                                       placeholder="Add learning objective">
-                                <button type="button" onclick="addLearningObjective('video')" 
-                                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
-                                    Add
-                                </button>
-                            </div>
+<!-- Similarly for documents content -->
+<div id="documentsContent" class="hidden">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <?php
+        
+        foreach($documents as $document): ?>
+            <article class="course-card bg-gray-800 rounded-xl overflow-hidden">
+                <div class="p-4">
+                    <div class="flex justify-center mb-4">
+                        <i class="fas fa-file-pdf text-4xl text-red-500"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold mb-2"><?php echo htmlspecialchars($document['title']); ?></h3>
+                    <div class="mb-2">
+                        <div class="flex flex-wrap gap-2 mb-2">
+                            <?php foreach($document['categories'] as $category): ?>
+                                <span class="bg-green-600 text-xs px-2 py-1 rounded">
+                                    <?php echo htmlspecialchars($category); ?>
+                                </span>
+                            <?php endforeach; ?>
+                            <?php foreach($document['tags'] as $tag): ?>
+                                <span class="bg-yellow-600 text-xs px-2 py-1 rounded">
+                                    <?php echo htmlspecialchars($tag); ?>
+                                </span>
+                            <?php endforeach; ?>
                         </div>
+                    </div>
+                    <div class="mb-2">
+                        <h4 class="text-sm font-medium text-gray-400">Learning Objectives:</h4>
+                        <ul class="text-sm text-gray-300 list-disc list-inside">
+                            <?php foreach($document['learning'] as $objective): ?>
+                                <li><?php echo htmlspecialchars($objective); ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    <div class="flex justify-between mt-4">
+                        <button onclick="editDocument(<?php echo $document['id']; ?>)" class="text-yellow-500">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form action="../../ADMIN/backend/suspend_course.php" method="POST" style="display:inline;">
+                        <input type="hidden" name="course_id" value="<?php echo $document['id']; ?>">
+                        <input type="hidden" name="type" value="document">
+                        <button type="submit" class="text-red-500">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        </form>
+                    </div>
+                </div>
+            </article>
+        <?php endforeach; ?>
+    </div>
+</div>
 
-                        <!-- Description -->
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
-                            <textarea name="description" rows="4" class="w-full rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required></textarea>
-                        </div>
+   <!-- Add Video Modal -->
+<div id="addVideoModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Add New Video</h2>
+            <button class="closeModal text-gray-400 hover:text-white">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <form id="addVideoForm" class="space-y-6" action="../Backend/set_vedio_to_db.php" method="POST" enctype="multipart/form-data">
+            <!-- Basic Information -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Video Title</label>
+                <input name="title" type="text" class="w-full rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
+            </div>
 
-                        <!-- Submit Buttons -->
-                        <div class="flex justify-end gap-3">
-                            <button type="button" class="closeModal px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
-                                Cancel
-                            </button>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
-                                Upload Video
-                            </button>
-                        </div>
-                    </form>
+            <!-- Video Upload -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Video File</label>
+                <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
+                    <input name="video" type="file" id="videoUpload" accept="video/*" class="hidden">
+                    <label for="videoUpload" class="cursor-pointer">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-400">Click to upload</p>
+                        <p class="text-sm text-gray-500">MP4, MP3 or Ogg (MAX. 800MB)</p>
+                    </label>
                 </div>
             </div>
+
+            <!-- Thumbnail -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Thumbnail</label>
+                <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
+                    <input name="thumbnail" type="file" id="thumbnailUpload" accept="image/*" class="hidden">
+                    <label for="thumbnailUpload" class="cursor-pointer">
+                        <i class="fas fa-image text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-400">Click to upload thumbnail</p>
+                        <p class="text-sm text-gray-500">JPG, PNG or GIF (MAX. 2MB)</p>
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Video Duration</label>
+                <div class="flex space-x-2">
+                    <input name="duration_hours" type="number" min="0" max="3" placeholder="Hours" class="w-1/3 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
+                    <input name="duration_minutes" type="number" min="0" max="59" placeholder="Minutes" class="w-1/3 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
+                    <input name="duration_seconds" type="number" min="0" max="59" placeholder="Seconds" class="w-1/3 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
+                </div>
+            </div>
+            <!-- Categories -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Categories</label>
+                <div class="flex gap-2">
+                    <div id="selectcategorie"></div>
+                    <select name="categorie" id="videoCategorySelect" class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2">
+                        <option value="" disabled selected>Select category</option>
+                        <?php foreach($result as $category): ?>
+                            <option value="<?php echo htmlspecialchars($category['id']); ?>">
+                                <?php echo htmlspecialchars($category['name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" onclick="addCategory('video')" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+                        Add
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Tags</label>
+                <div class="flex flex-wrap gap-2 mb-2" id="videoTags"></div>
+                <div class="flex gap-2">
+                    <select id="videoTAGSelect" name="tags[]" class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" multiple>
+                        <option value="" disabled selected>Select tag</option>
+                        <?php foreach($result2 as $tag): ?>
+                            <option value="<?php echo htmlspecialchars($tag['id']); ?>"><?php echo htmlspecialchars($tag['name']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" onclick="addTag('video')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+                        Add
+                    </button>
+                </div>
+            </div>
+
+            <!-- Learning Objectives -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Learning Objectives</label>
+                <div class="space-y-2 mb-2" id="videoLearningObjectives"></div>
+                <div class="flex gap-2">
+                    <input id="addlearning" type="hidden" name="learning[]" >
+                    <input type="text" id="videoObjectiveInput" 
+                           class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" 
+                           placeholder="Add learning objective">
+                    <button type="button" onclick="addLearningObjective('video')" 
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+                        Add
+                    </button>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <textarea name="description" rows="4" class="w-full rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required></textarea>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end gap-3">
+                <button type="button" class="closeModal px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-500">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+                    Upload Video
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 
 <!-- Add Document Modal -->
@@ -429,15 +453,18 @@ require_once '../Backend/get_all_categorie.php';
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
-        <form id="addDocForm" class="space-y-6" action="../Backend/set_document_to_db.php" method="POST" enctype="multipart/form-data"  >
+        <form id="addDocForm" class="space-y-6" action="../Backend/set_document_to_db.php" method="POST" enctype="multipart/form-data">
+            <!-- Document Title -->
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-2">Document Title</label>
                 <input name="document_title" type="text" class="w-full rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" required>
             </div>
+
+            <!-- Document File -->
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-2">Document File</label>
                 <div class="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center">
-                    <input name="document" type="file" id="docUpload" accept=".pdf,.doc,.docx" class="hidden">
+                    <input name="document" type="file" id="docUpload" accept=".pdf,.doc,.docx,.xlsx" class="hidden">
                     <label for="docUpload" class="cursor-pointer">
                         <i class="fas fa-file-upload text-4xl text-gray-400 mb-2"></i>
                         <p class="text-gray-400">Click to upload or drag and drop</p>
@@ -449,48 +476,54 @@ require_once '../Backend/get_all_categorie.php';
             <!-- Categories -->
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-2">Categories</label>
-                <div class="flex flex-wrap gap-2 mb-2" id="docCategories"></div>
                 <div class="flex gap-2">
-                    <input name="categorie" type="text" id="docCategoryInput" 
-                           class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" 
-                           placeholder="Add category">
-                    <button type="button" onclick="addCategory('doc')" 
-                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500">
+                    <select name="categorie" id="docCategorySelect" class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2">
+                        <option value="" disabled selected>Select category</option>
+                        <?php foreach($result as $category): ?>
+                            <option value="<?php echo htmlspecialchars($category['id']); ?>">
+                                <?php echo htmlspecialchars($category['name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <button type="button" onclick="addCategory('document')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
                         Add
                     </button>
                 </div>
+                <div id="docCategories" class="flex flex-wrap gap-2 mt-2"></div>
             </div>
 
             <!-- Tags -->
             <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Tags</label>
-                <div class="flex flex-wrap gap-2 mb-2" id="docTags"></div>
-                <div class="flex gap-2">
-                    <input type="text" id="docTagInput" 
-                           class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" 
-                           placeholder="Add tag">
-                    <button type="button" onclick="addTag('doc')" 
-                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500">
-                        Add
-                    </button>
-                </div>
-            </div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">Tags</label>
+    <div class="flex flex-wrap gap-2 mb-2" id="documentTags"></div>
+    <div class="flex gap-2">
+        <select id="documentTAGSelect" name="tags[]" class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" multiple>
+            <option value="" disabled selected>Select tag</option>
+            <?php foreach($result2 as $tag): ?>
+                <option value="<?php echo htmlspecialchars($tag['id']); ?>"><?php echo htmlspecialchars($tag['name']); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <button type="button" onclick="addDocumentTag('document')" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+            Add
+        </button>
+    </div>
+</div>
 
-            <!-- Learning Objectives -->
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Learning Objectives</label>
-                <div class="space-y-2 mb-2" id="docLearningObjectives"></div>
-                <div class="flex gap-2">
-                    <input type="text" id="docObjectiveInput" 
-                           class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" 
-                           placeholder="Add learning objective">
-                    <button type="button" onclick="addLearningObjective('doc')" 
-                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-500">
-                        Add
-                    </button>
-                </div>
-            </div>
-
+<!-- Update the Learning Objectives section in the document form -->
+<div>
+    <label class="block text-sm font-medium text-gray-300 mb-2">Learning Objectives</label>
+    <div class="space-y-2 mb-2" id="documentLearningObjectives"></div>
+    <div class="flex gap-2">
+        <input id="addDocumentLearning" type="hidden" name="learning[]">
+        <input type="text" id="documentObjectiveInput" 
+               class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" 
+               placeholder="Add learning objective">
+        <button type="button" onclick="addDocumentLearningObjective('document')" 
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+            Add
+        </button>
+    </div>
+</div>
             <!-- Description -->
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-2">Description</label>
@@ -649,12 +682,10 @@ require_once '../Backend/get_all_categorie.php';
                 <label class="block text-sm font-medium text-gray-300 mb-2">Categories</label>
                 <div class="flex flex-wrap gap-2 mb-2" id="editDocCategories"></div>
                 <div class="flex gap-2">
-                    <select name="" id="editDocCategoryInput"class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" 
-                    >
+                    <select name="" id="editDocCategoryInput"class="flex-1 rounded-md bg-gray-700 border-gray-600 text-white px-4 py-2" >
                     <?php foreach($result as $category):    ?>
-                     <option value="$category['id']"><?php $category['name']?></option> .'<br>';
+                     <option value="<?= $category['id']?>"><?php $category['name']?></option> .'<br>';
                            <?php endforeach;?>
-                    </select>
                 </select>
                            placeholder="Add category">
                     <button type="button" onclick="addCategory('editDoc')" 
@@ -752,57 +783,109 @@ require_once '../Backend/get_all_categorie.php';
     });
 });
 
-// Category Management
-function addCategory(type) {
-    const select = document.getElementById(`${type}CategorySelect`);
-    const container = document.getElementById(`${type}Categories`);
-    const value = select.value;
-    const text = select.options[select.selectedIndex].text;
-    
-    if (value) {
-        const span = document.createElement('span');
-        span.className = 'bg-blue-500 text-white px-2 py-1 rounded-full text-sm flex items-center';
-        span.innerHTML = `
-            ${text}
-            <button onclick="this.parentElement.remove()" class="ml-2 text-xs">&times;</button>
-            <input type="hidden" name="categories[]" value="${value}">
-        `;
-
-        container.appendChild(span);
-        select.value = ''; 
-    }
-}
-
-// Tag Management
 function addTag(type) {
     const select = document.getElementById(`${type}TAGSelect`);
-    const container = document.getElementById(`${type}Tags`);
+    const container = document.getElementById('videoTags');
     const value = select.value;
     const text = select.options[select.selectedIndex].text;
-    
+
     if (value) {
         const span = document.createElement('span');
         span.className = 'bg-green-500 text-white px-2 py-1 rounded-full text-sm flex items-center';
-        span.innerHTML = `
-            ${text}
-            <button onclick="this.parentElement.remove()" class="ml-2 text-xs">&times;</button>
-            <input type="hidden" name="tags[]" value="${value}">
-        `;
-        container.appendChild(span);
-        select.value = ''; 
-        if (value) {
-        // Create a hidden input to store the last tag value
+        
         const hiddenInput = document.createElement('input');
         hiddenInput.type = 'hidden';
-        hiddenInput.name = 'categorieselect[]';
+        hiddenInput.name = 'tags[]'; // Correction here
         hiddenInput.value = value;
-        document.getElementById('selectcategorie').appendChild(hiddenInput);
-    }
+        
+        span.innerHTML = `
+            ${text}
+            <button type="button" onclick="removeTag(this)" class="ml-2 text-xs">&times;</button>
+        `;
+        
+        container.appendChild(span);
+        container.appendChild(hiddenInput);
+        select.value = '';
     }
 }
 
-// Learning Objectives Management
+// Form submission event listener for debugging
+document.getElementById('addVideoForm').addEventListener('submit', function(event) {
+    const formData = new FormData(this);
+    for (const [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+});
+
 function addLearningObjective(type) {
+    const input = document.getElementById(`${type}ObjectiveInput`);
+    const container = document.getElementById(`${type}LearningObjectives`);
+    const value = input.value.trim();
+    
+    if (value) {
+        // Create new div with the value
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2';
+        div.innerHTML = `
+            <span class="flex-1 bg-gray-700 p-2 rounded">${value}</span>
+            <button type="button" onclick="removeLearningObjective(this)" class="text-red-500">&times;</button>
+            <input type="hidden" name="learning[]" value="${value}">
+        `;
+        container.appendChild(div);
+
+        // Also update the current input field
+        document.getElementById('addlearning').value = value;
+        
+        // Clear the input
+        input.value = '';
+    }
+}
+
+function removeLearningObjective(button) {
+    button.parentElement.remove();
+}
+
+// Add event listener for the input field
+document.getElementById('videoObjectiveInput').addEventListener('input', function() {
+    document.getElementById('addlearning').value = this.value;
+});
+// Function to add tags for documents
+function addDocumentTag(type) {
+    const select = document.getElementById(`${type}TAGSelect`);
+    const container = document.getElementById('documentTags');
+    const value = select.value;
+    const text = select.options[select.selectedIndex].text;
+
+    if (value) {
+        const span = document.createElement('span');
+        span.className = 'bg-green-500 text-white px-2 py-1 rounded-full text-sm flex items-center';
+        
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.name = 'tags[]';
+        hiddenInput.value = value;
+        
+        span.innerHTML = `
+            ${text}
+            <button type="button" onclick="removeDocumentTag(this)" class="ml-2 text-xs">&times;</button>
+        `;
+        
+        container.appendChild(span);
+        container.appendChild(hiddenInput);
+        select.value = '';
+    }
+}
+
+// Function to remove document tags
+function removeDocumentTag(button) {
+    const tagElement = button.parentElement;
+    const hiddenInput = tagElement.nextElementSibling;
+    tagElement.remove();
+    hiddenInput.remove();
+}
+
+// Function to add learning objectives for documents
+function addDocumentLearningObjective(type) {
     const input = document.getElementById(`${type}ObjectiveInput`);
     const container = document.getElementById(`${type}LearningObjectives`);
     const value = input.value.trim();
@@ -812,21 +895,31 @@ function addLearningObjective(type) {
         div.className = 'flex items-center gap-2';
         div.innerHTML = `
             <span class="flex-1 bg-gray-700 p-2 rounded">${value}</span>
-            <button onclick="this.parentElement.remove()" class="text-red-500">&times;</button>
+            <button type="button" onclick="removeDocumentLearningObjective(this)" class="text-red-500">&times;</button>
             <input type="hidden" name="learning[]" value="${value}">
         `;
         container.appendChild(div);
+
+        document.getElementById('addDocumentLearning').value = value;
         input.value = '';
-        if (value) {
-        // Create a hidden input to store the last tag value
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = 'tagsselect[]';
-        hiddenInput.value = value;
-        document.getElementById('selecttags').appendChild(hiddenInput);
     }
+}
+
+// Function to remove learning objectives for documents
+function removeDocumentLearningObjective(button) {
+    button.parentElement.remove();
+}
+
+// Add event listener for the document objective input
+document.addEventListener('DOMContentLoaded', function() {
+    const documentObjectiveInput = document.getElementById('documentObjectiveInput');
+    if (documentObjectiveInput) {
+        documentObjectiveInput.addEventListener('input', function() {
+            document.getElementById('addDocumentLearning').value = this.value;
+        });
     }
-}</script>
+});
+</script>
 </body>
 </html>
                             
