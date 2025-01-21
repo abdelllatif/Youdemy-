@@ -2,6 +2,22 @@
 session_start();
 require_once '../Backend/test.php';
 require_once '../Backend/vedio.php';
+require_once '../../Classes/class_course_content.php';
+
+$searchTerm = '';
+$videos = []; // Initialisation de la variable pour stocker les vidéos
+
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['search_term'])) {
+    $searchTerm = htmlspecialchars(trim($_POST['search_term']));
+    $results = new VideoHandler(0, 0);
+    $videos = $results->searchVideos($searchTerm); // Appel de la méthode de recherche
+} else {
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $results = new VideoHandler(0, 0);
+    $data = $results->afficherbypaginate($page);
+    $videos = $data['videos'];
+    $pagination = $data['pagination'];// Appel de la méthode d'affichage par défaut
+}
 
 ?>
 <!DOCTYPE html>
@@ -66,11 +82,19 @@ require_once '../Backend/vedio.php';
 
                     <!-- Profile Dropdown -->
                     <div class="relative" id="profileDropdown">
-                        <button class="flex items-center space-x-2 focus:outline-none">
-                            <img src="/api/placeholder/32/32" alt="Profile" class="h-8 w-8 rounded-full ring-2 ring-blue-500">
-                            <span class="hidden md:block dark-transition text-gray-700 dark:text-gray-200">John Doe</span>
-                            <i class="fas fa-chevron-down text-gray-400"></i>
-                        </button>
+                    <?php if (!isset($_SESSION['client'])): ?>
+            <a href="login/frontend/singin.php" class="text-blue-500 hover:underline">Connexion</a>
+            <?php else: ?>
+                <div class="relative" id="profileDropdown">
+                    <button class="flex items-center space-x-2 focus:outline-none">
+                        <img src="/api/placeholder/32/32" alt="Profile" class="h-8 w-8 rounded-full ring-2 ring-blue-500">
+                        <span class="hidden md:block dark-transition text-gray-700 dark:text-gray-200">
+                            <?= htmlspecialchars($_SESSION['client']['first_name'] ?? 'Utilisateur') ?>
+                        </span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </button>
+                </div>
+            <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -82,13 +106,19 @@ require_once '../Backend/vedio.php';
         <div class="max-w-7xl mx-auto px-4 py-8">
             <!-- Search and Filters -->
             <div class="mb-8">
-                <div class="relative">
-                    <input type="text" 
-                        id="searchInput"
-                        placeholder="Search courses..." 
-                        class="w-full px-4 py-3 rounded-lg border bg-white dark:bg-gray-800 dark:text-white dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i>
-                </div>
+<!-- Search Bar in navigation -->
+<div class="hidden md:flex flex-1 items-center justify-center px-6">
+    <form action="" method="POST" class="w-full max-w-lg relative">
+        <input type="text" 
+               name="search_term"
+               class="w-full dark-transition bg-gray-100 dark:bg-gray-700 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-white"
+               placeholder="Search for courses...">
+        <button type="submit" class="absolute right-3 top-3 text-gray-400">
+            <i class="fas fa-search"></i>
+        </button>
+    </form>
+</div>
+
                 <div class="flex flex-wrap gap-4 mt-4">
                     <button class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors">All</button>
                     <button class="px-4 py-2 rounded-lg border dark:border-gray-700 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Programming</button>
@@ -193,6 +223,49 @@ require_once '../Backend/vedio.php';
             </div>
         </article>
     <?php endforeach; ?>
+</div>
+<!-- Pagination -->
+<div class="mt-12 flex justify-center">
+    <nav class="flex items-center space-x-2">
+        <!-- Previous Page Button -->
+        <a href="?page=<?= max(1, $pagination['currentPage'] - 1) ?>" 
+           class="p-2 rounded-lg border dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 <?= $pagination['currentPage'] <= 1 ? 'opacity-50 cursor-not-allowed' : '' ?>">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+
+        <?php
+        $totalPages = $pagination['totalPages'];
+        $currentPage = $pagination['currentPage'];
+        $range = 2; // Number of pages to show before and after current page
+
+        for ($i = 1; $i <= $totalPages; $i++) {
+            // Show first page, last page, and pages around current page
+            if ($i == 1 || $i == $totalPages || ($i >= $currentPage - $range && $i <= $currentPage + $range)) {
+                ?>
+                <a href="?page=<?= $i ?>" 
+                   class="px-4 py-2 rounded-lg <?= $i === $currentPage ? 'bg-blue-600 text-white' : 'border dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800' ?>">
+                    <?= $i ?>
+                </a>
+                <?php
+            } elseif ($i == 2 || $i == $totalPages - 1) {
+                // Show ellipsis
+                echo '<span class="px-4 py-2 text-gray-600 dark:text-gray-400">...</span>';
+            }
+        }
+        ?>
+
+        <!-- Next Page Button -->
+        <a href="?page=<?= min($totalPages, $pagination['currentPage'] + 1) ?>" 
+           class="p-2 rounded-lg border dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 <?= $pagination['currentPage'] >= $totalPages ? 'opacity-50 cursor-not-allowed' : '' ?>">
+            <i class="fas fa-chevron-right"></i>
+        </a>
+    </nav>
+</div>
+
+<!-- Add page info above or below pagination -->
+<div class="text-center mt-4 text-sm text-gray-600 dark:text-gray-400">
+    Showing page <?= $pagination['currentPage'] ?> of <?= $pagination['totalPages'] ?> 
+    (<?= $pagination['totalItems'] ?> total videos)
 </div>
     </div>
     
@@ -311,24 +384,7 @@ require_once '../Backend/vedio.php';
         
 
 
-            <!-- Pagination -->
-            <div class="mt-12 flex justify-center">
-                <nav class="flex items-center space-x-2">
-                    <button class="p-2 rounded-lg border dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <button class="px-4 py-2 rounded-lg bg-blue-600 text-white">1</button>
-                    <button class="px-4 py-2 rounded-lg border dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">2</button>
-                    <button class="px-4 py-2 rounded-lg border dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">3</button>
-                    <span class="px-4 py-2 text-gray-600 dark:text-gray-400">...</span>
-                    <button class="px-4 py-2 rounded-lg border dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">12</button>
-                    <button class="p-2 rounded-lg border dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
-                </nav>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Footer -->
     <footer class="dark-transition bg-gray-800 dark:bg-gray-900 text-white mt-12">
@@ -343,6 +399,12 @@ require_once '../Backend/vedio.php';
     </footer>
 
     <script>
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        this.closest('form').submit();
+    }
+});
         let currentView = 'video';
 
         function toggleView(view) {
@@ -369,6 +431,13 @@ require_once '../Backend/vedio.php';
        function toggleDarkMode() {
             document.body.classList.toggle('dark');
         }
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        this.closest('form').submit();
+    }
+});
+
     </script>
 </body>
 </html>

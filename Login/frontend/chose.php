@@ -56,7 +56,7 @@
 
                 <!-- Professor Card -->
                 <form action="../backend/singin_traitement.php" method="POST">
-                    <input type="hidden" name="role" value="professor">
+                    <input type="hidden" name="role" value="teacher">
                     <button type="submit" class="role-card cursor-pointer transition-all duration-300 dark-transition bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 hover:shadow-xl">
                         <div class="text-center mb-4">
                             <div class="w-20 h-20 mx-auto bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center">

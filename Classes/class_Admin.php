@@ -139,13 +139,14 @@ class Admin extends User {
             if ($status) {
                 $query = "SELECT id, first_name, last_name, email, role, status, created_at 
                          FROM users 
-                         WHERE status = :status 
+            WHERE status = :status
                          ORDER BY created_at DESC";
             $stmt = $this->pdo->getConnection()->prepare($query);
             $stmt->bindParam(":status", $status);
             } else {
                 $query = "SELECT id, first_name, last_name, email, role, status, created_at 
                          FROM users 
+                        where  role != 'admin'
                          ORDER BY created_at DESC";
             $stmt = $this->pdo->getConnection()->prepare($query);
         }

@@ -2,8 +2,17 @@
 session_start();
 require_once '../../Classes/class_course_content.php';
 require_once '../../Classes/class_user.php';
+if (!isset($_SESSION['client'])) {
+    header('location:../../login/frontend/singin.php');
+    exit(); 
+}
 
+if ($_SESSION['client']['role'] != 'student') {
+    header('location:../../login/frontend/singin.php');
+    exit(); 
+}
 $userId = $_SESSION['client']['id']; // Assuming the user ID is 1, replace with actual logged-in user ID
+
 
 // Initialize the handler classes
 $videoHandler = new VideoHandler();

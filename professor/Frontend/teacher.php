@@ -1,20 +1,40 @@
 <?php
-// session_start();
+session_start();
 
-// // Check if the session variable 'client' is not set
-// if (!isset($_SESSION['client'])) {
-//     header('location:../../login/frontend/singin.php');
-//     exit(); 
-// }
+if (!isset($_SESSION['client'])) {
+    header('location:../../login/frontend/singin.php');
+    exit(); 
+}
 
-// // Now check if the user is a teacher or is approved
-// if ($_SESSION['client']['role'] != 'teacher' && $_SESSION['client']['is_approved'] != 1) {
-//     header('location:../../login/frontend/singin.php');
-//     exit(); 
-// }
+if ($_SESSION['client']['role'] != 'teacher' && $_SESSION['client']['is_approved'] != 1) {
+    header('location:../../login/frontend/singin.php');
+    exit(); 
+}
 require_once '../Backend/get_all_tags.php';
 require_once '../Backend/get_all_categorie.php';
 require_once '../Backend/get_all_documents.php';
+require_once '../../Classes/teacher.php';
+$teacherStats = new TeacherStatistics();
+$teacherId = $_SESSION['client']['id']; // Assuming you store teacher ID in session
+
+// Get statistics
+$totalVideoStudents = $teacherStats->getTotalVideoStudents($teacherId);
+$totalDocStudents = $teacherStats->getTotalDocumentStudents($teacherId);
+$totalVideos = $teacherStats->getTotalVideos($teacherId);
+$totalDocuments = $teacherStats->getTotalDocuments($teacherId);
+$topVideos = $teacherStats->getTopVideos($teacherId);
+$teacherStats = new TeacherStatistics();
+$totalVideoStudents = $teacherStats->getTotalVideoStudents($teacherId);
+$totalDocumentStudents = $teacherStats->getTotalDocumentStudents($teacherId);
+$totalStudents = $totalVideoStudents + $totalDocumentStudents;
+
+$totalVideos = $teacherStats->getTotalVideos($teacherId);
+$totalDocuments = $teacherStats->getTotalDocuments($teacherId);
+$totalCourses = $totalVideos + $totalDocuments;
+
+$enrolledStudents = $teacherStats->getEnrolledStudents($teacherId);
+$teacherProfile = $teacherStats->getTeacherProfile($teacherId);
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -111,7 +131,7 @@ require_once '../Backend/get_all_documents.php';
     <div class="flex flex-col md:flex-row items-center md:items-start">
         <div class="relative mb-4 md:mb-0 md:mr-6">
             <!-- Profile Image -->
-            <img id="profileImage" src="/api/placeholder/128/128" alt="Profile" class="rounded-full w-32 h-32">
+            <img id="profileImage" src="../../professor/Backend/<?php echo $teacherProfile['avatar_path']; ?> " alt="Profile" class="rounded-full w-32 h-32">
 
             <!-- Hidden File Input -->
             <input id="fileInput" type="file" accept="image/*" class="hidden">
@@ -124,25 +144,53 @@ require_once '../Backend/get_all_documents.php';
                 </svg>
             </button>
         </div>
-
         <div class="text-center md:text-left flex-grow">
-            <h1 class="text-2xl font-bold mb-2">Jane Smith</h1>
-            <p class="text-gray-400 mb-4">Web Development Instructor</p>
-            <div class="flex flex-wrap justify-center md:justify-start gap-4">
-                <div>
-                    <i class="fas fa-book-open mr-2"></i>
-                    <span>10 Courses</span>
-                </div>
-                <div>
-                    <i class="fas fa-user-graduate mr-2"></i>
-                    <span>200 Students</span>
-                </div>
-                <div>
-                    <i class="fas fa-calendar-alt mr-2"></i>
-                    <span>Age: 30</span>
-                </div>
-            </div>
+    <h1 class="text-2xl font-bold mb-2"><?php echo $teacherProfile['first_name']." ".$teacherProfile['last_name']; ?></h1>
+    <p class="text-gray-400 mb-4"><?php echo $teacherProfile['specialty']; ?> Instructor</p>
+    <div class="flex flex-wrap justify-center md:justify-start gap-4">
+        <div>
+            <i class="fas fa-book-open mr-2"></i>
+            <span><?php echo $totalCourses; ?> Courses</span>
         </div>
+        <div>
+            <i class="fas fa-user-graduate mr-2"></i>
+            <span><?php echo $totalStudents; ?> Students</span>
+        </div>
+        <div>
+            <i class="fas fa-calendar-alt mr-2"></i>
+            <span>Age: <?php echo $teacherProfile['age']; ?></span>
+        </div>
+        <div>
+            <i class="fas fa-envelope mr-2"></i>
+            <span>Email: <?php echo $teacherProfile['email']; ?></span>
+        </div>
+    </div>
+    <button onclick="openPopup()" class="bg-blue-500 text-white px-4 py-2 mt-4">View Enrolled Students</button>
+</div>
+
+<!-- Popup Modal -->
+<div id="studentPopup" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h2 class="text-xl font-bold mb-4">Enrolled Students</h2>
+        <ul class="list-disc pl-5">
+            <?php foreach ($enrolledStudents as $student): ?>
+                <li><?php echo $student['first_name'].['last_name'] . " (" . $student['email'] . ")"; ?></li>
+            <?php endforeach; ?>
+        </ul>
+        <button onclick="closePopup()" class="mt-4 bg-red-500 text-white px-4 py-2">Close</button>
+    </div>
+</div>
+
+<script>
+    function openPopup() {
+        document.getElementById('studentPopup').classList.remove('hidden');
+    }
+
+    function closePopup() {
+        document.getElementById('studentPopup').classList.add('hidden');
+    }
+</script>
+
                     <button id="editProfileBtn" class="mt-4 md:mt-0 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">Edit Profile</button>
                 </div>
             </div>
@@ -178,47 +226,91 @@ require_once '../Backend/get_all_documents.php';
     </div>
 </div>
 
-            <!-- Stats Overview -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-gray-800 rounded-xl p-6 animate-slide-in" style="animation-delay: 0.1s">
+                
+        <!-- Detailed Statistics Section -->
+        <div class="bg-gray-800 rounded-xl p-6 mb-10">
+            <h2 class="text-xl font-bold mb-6">Detailed Statistics</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Video Students Stats -->
+                <div class="bg-gray-700 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-400">Total Playlists</p>
-                            <h3 class="text-2xl font-bold">12</h3>
+                            <p class="text-gray-400">Video Students</p>
+                            <h3 class="text-2xl font-bold"><?php echo $totalVideoStudents; ?></h3>
                         </div>
-                        <i class="fas fa-list text-3xl text-blue-500"></i>
+                        <i class="fas fa-users text-3xl text-blue-500"></i>
                     </div>
                 </div>
-                <div class="bg-gray-800 rounded-xl p-6 animate-slide-in" style="animation-delay: 0.2s">
+
+                <!-- Document Students Stats -->
+                <div class="bg-gray-700 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-400">In Progress</p>
-                            <h3 class="text-2xl font-bold">5</h3>
+                            <p class="text-gray-400">Document Students</p>
+                            <h3 class="text-2xl font-bold"><?php echo $totalDocStudents; ?></h3>
                         </div>
-                        <i class="fas fa-clock text-3xl text-yellow-500"></i>
+                        <i class="fas fa-file-alt text-3xl text-green-500"></i>
                     </div>
                 </div>
-                <div class="bg-gray-800 rounded-xl p-6 animate-slide-in" style="animation-delay: 0.3s">
+
+                <!-- Total Videos Stats -->
+                <div class="bg-gray-700 rounded-lg p-4">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-400">Completed</p>
-                            <h3 class="text-2xl font-bold">7</h3>
+                            <p class="text-gray-400">Total Videos</p>
+                            <h3 class="text-2xl font-bold"><?php echo $totalVideos; ?></h3>
                         </div>
-                        <i class="fas fa-check-circle text-3xl text-green-500"></i>
+                        <i class="fas fa-video text-3xl text-purple-500"></i>
+                    </div>
+                </div>
+
+                <!-- Total Documents Stats -->
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-400">Total Documents</p>
+                            <h3 class="text-2xl font-bold"><?php echo $totalDocuments; ?></h3>
+                        </div>
+                        <i class="fas fa-folder text-3xl text-yellow-500"></i>
                     </div>
                 </div>
             </div>
+
+            <!-- Top Videos Section -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold mb-4">Top 5 Most Popular Videos</h3>
+                <div class="bg-gray-700 rounded-lg p-4">
+                    <?php if (!empty($topVideos)): ?>
+                        <ul class="space-y-4">
+                            <?php foreach ($topVideos as $video): ?>
+                                <li class="flex justify-between items-center">
+                                    <span class="text-gray-300"><?php echo htmlspecialchars($video['title']); ?></span>
+                                    <span class="bg-blue-600 px-3 py-1 rounded-full text-sm">
+                                        <?php echo $video['enrollment_count']; ?> students
+                                    </span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php else: ?>
+                        <p class="text-gray-400 text-center">No video data available</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+
+
+
                    <!-- Content Tabs -->
         <div class="flex justify-center space-x-4 mb-8">
             <button id="showVideos" class="bg-blue-500 text-white px-6 py-3 rounded hover:bg-blue-600">Videos</button>
             <button id="showDocuments" class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600">Documents</button>
         </div>
 
-        // In the videosContent div, replace the static content with:
 <div id="videosContent" class="">
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         <?php
-        // Create instance of your class that has the getTeacherVideos method
 
         foreach($videos as $video): ?>
             <article class="course-card bg-gray-800 rounded-xl overflow-hidden">
@@ -253,9 +345,14 @@ require_once '../Backend/get_all_documents.php';
                         </ul>
                     </div>
                     <div class="flex justify-between mt-4">
-                        <button onclick="editVideo(<?php echo $video['id']; ?>)" class="text-yellow-500">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                    <form action="bbb.php" method="GET">
+                    <input type="hidden" name="id" value="<?php echo htmlspecialchars($video['id']); ?>">
+                    <button type="submit" class="text-yellow-500">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                </form>
+
+
                         <form action="../../ADMIN/backend/suspend_course.php" method="POST" style="display:inline;">
                         <input type="hidden" name="course_id" value="<?php echo $video['id']; ?>">
                         <input type="hidden" name="type" value="video">
@@ -268,6 +365,10 @@ require_once '../Backend/get_all_documents.php';
             </article>
         <?php endforeach; ?>
     </div>
+    <button id="addNewVideoBtn" class="mt-8 px-6 py-3 bg-green-600 text-white rounded hover:bg-green-500">
+
+ Add New vedio
+ </button> 
 </div>
 
 <!-- Similarly for documents content -->
@@ -320,6 +421,9 @@ require_once '../Backend/get_all_documents.php';
             </article>
         <?php endforeach; ?>
     </div>
+    <button id="addNewDocBtn" class="mt-8 px-6 py-3 bg-green-600 text-white rounded hover:bg-green-500">
+ Add New Document
+</button> 
 </div>
 
    <!-- Add Video Modal -->
@@ -543,7 +647,7 @@ require_once '../Backend/get_all_documents.php';
     </div>
 </div>
 <!-- Edit Video Modal -->
-<div id="editVideoModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+<div id="editVideoModal"  class="hidden fixed inset-0 bg-gray-900 bg-opacity-50  flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">Edit Video</h2>
@@ -649,7 +753,7 @@ require_once '../Backend/get_all_documents.php';
 </div>
 
 <!-- Edit Document Modal -->
-<div id="editDocModal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+<div id="editDocModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-bold">Edit Document</h2>
@@ -743,7 +847,12 @@ require_once '../Backend/get_all_documents.php';
         </form>
     </div>
 </div>
-<script>document.addEventListener('DOMContentLoaded', function() {
+
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
     const showVideosBtn = document.getElementById('showVideos');
     const showDocsBtn = document.getElementById('showDocuments');
     const videosContent = document.getElementById('videosContent');
@@ -753,6 +862,7 @@ require_once '../Backend/get_all_documents.php';
     const videoModal = document.getElementById('addVideoModal');
     const docModal = document.getElementById('addDocModal');
     const closeButtons = document.querySelectorAll('.closeModal');
+    // Function to show video edit modal
 
     // Toggle content sections
     showVideosBtn.addEventListener('click', () => {
@@ -919,6 +1029,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+//*************************************************************************************************** */
+
 </script>
 </body>
 </html>

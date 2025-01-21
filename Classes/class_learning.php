@@ -6,7 +6,7 @@ class Learning {
     public $learning;
     protected $pdo;
     public function __construct($id, $playlist_id, $learning) {
-        $this->pdo = ;
+        $this->pdo = new Data();
         $this->id = $id;
         $this->playlist_id = $playlist_id;
         $this->learning = $learning;
@@ -15,7 +15,7 @@ class Learning {
         $this->learning = $learning;
 
         $query = 'INSERT INTO learning(name) VALUES(:learning)';
-        $stmt = $this->pdo->prepare($query);
+        $stmt = $this->pdo->getConnection()->prepare($query);
         
         $stmt->bindValue(':learning', $this->learning); 
         

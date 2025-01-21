@@ -93,16 +93,22 @@ CREATE TABLE IF NOT EXISTS document_categories (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
     UNIQUE KEY unique_document_category (document_id, category_id)
 );
-
--- Table for learnings
-CREATE TABLE IF NOT EXISTS learnings (
+-- Table for video learnings
+CREATE TABLE IF NOT EXISTS video_learnings (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    video_id INT  NULL,
-    document_id INT  NULL,
+    video_id INT NOT NULL,
     learning TEXT NOT NULL,
-    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE,
+    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+);
+
+-- Table for document learnings
+CREATE TABLE IF NOT EXISTS document_learnings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    document_id INT NOT NULL,
+    learning TEXT NOT NULL,
     FOREIGN KEY (document_id) REFERENCES document(id) ON DELETE CASCADE
 );
+
 
 CREATE TABLE video_enrollments (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -134,3 +140,6 @@ ALTER TABLE videos ADD COLUMN suspended_by VARCHAR(50) NULL;
 
 ALTER TABLE document ADD COLUMN status VARCHAR(20) DEFAULT 'active';
 ALTER TABLE document ADD COLUMN suspended_by VARCHAR(50) NULL;
+ALTER TABLE teachers
+ADD COLUMN age INT NOT NULL,
+ADD COLUMN specialty VARCHAR(255) NOT NULL;

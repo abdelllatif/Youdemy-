@@ -2,6 +2,16 @@
 session_start();
 require_once '../../Classes/class_course_content.php';
 
+if (!isset($_SESSION['client'])) {
+    header('location:../../login/frontend/singin.php');
+    exit(); 
+}
+
+if ($_SESSION['client']['role'] != 'student') {
+    header('location:../../login/frontend/singin.php');
+    exit(); 
+}
+
 if (isset($_GET['iddoc'])) {
     $id = intval($_GET['iddoc']);
 

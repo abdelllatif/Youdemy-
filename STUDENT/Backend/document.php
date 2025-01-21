@@ -17,6 +17,7 @@ if (isset($_POST['iddoc'])) {
 var_dump($rejoindre);
         $documentContent = new DocumentContent('', '', 0);
         $message = $documentContent->enrollUser($user_id, $document_id);
+        header("location:../Frontend/course-details.php?iddoc=$document_id");
     } else {
         $message = 'Invalid request or not logged in as student.';
     }

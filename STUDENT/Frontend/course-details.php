@@ -1,15 +1,24 @@
 <?php
 session_start();
-require_once '../../Classes/class_course_content.php';
+if (!isset($_SESSION['client'])) {
+    header('location:../../login/frontend/singin.php');
+    exit(); 
+}
+$role = $_SESSION['client']['role'];
+$status = $_SESSION['client']['status'];
 
-// التحقق من استقبال المعرف عبر GET
+if ($role != 'student' && $status != 'active') {
+    if ($status == 'suspended') {
+        header('location:../../login/frontend/suspend.php');
+    } else {
+        header('location:../../index.php');
+    }
+    exit();
+}
+
 if (isset($_GET['iddoc'])) {
     $document_id = intval($_GET['iddoc']);
-
-    // إنشاء كائن من DocumentContent
     $documentContent = new DocumentContent('', '', 0);
-
-    // جلب بيانات المستند
     $document = $documentContent->getDocumentById($document_id);
 
     if ($document) {
@@ -19,7 +28,6 @@ if (isset($_GET['iddoc'])) {
         exit;
     }
 } else {
-    // إذا لم يتم استقبال المعرف، إعادة التوجيه إلى صفحة الدورات
     header("Location: courses.php");
     exit();
 }

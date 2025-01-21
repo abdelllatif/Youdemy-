@@ -1,3 +1,7 @@
+<?php
+session_start();
+
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,15 +99,19 @@
                             <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">3</span>
                         </button>
                     </div>
-
-                    <!-- Profile Dropdown -->
-                    <div class="relative" id="profileDropdown">
-                        <button class="flex items-center space-x-2 focus:outline-none">
-                            <img src="/api/placeholder/32/32" alt="Profile" class="h-8 w-8 rounded-full ring-2 ring-blue-500">
-                            <span class="hidden md:block dark-transition text-gray-700 dark:text-gray-200">Abdellatif Hissoune</span>
-                            <i class="fas fa-chevron-down text-gray-400"></i>
-                        </button>
-                    </div>
+    <?php if (!isset($_SESSION['client'])): ?>
+        <a href="login/frontend/singin.php" class="text-blue-500 hover:underline">Connexion</a>
+    <?php else: ?>
+        <div class="relative" id="profileDropdown">
+            <button class="flex items-center space-x-2 focus:outline-none">
+                <img src="/api/placeholder/32/32" alt="Profile" class="h-8 w-8 rounded-full ring-2 ring-blue-500">
+                <span class="hidden md:block dark-transition text-gray-700 dark:text-gray-200">
+                    <?= htmlspecialchars($_SESSION['client']['first_name'] ?? 'Utilisateur') ?>
+                </span>
+                <i class="fas fa-chevron-down text-gray-400"></i>
+            </button>
+        </div>
+    <?php endif; ?>
                 </div>
             </div>
         </div>

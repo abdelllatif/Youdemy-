@@ -172,8 +172,127 @@ class VideoHandler extends CourseContent {
         return $videos ?: []; // Return empty array if no videos are found
     }
     
+    public function updateVideo($videoId, $title, $description, $teacherId, $videoFile = null, $thumbnailFile = null, $duration = null, $tags = [], $categoryId = null) {
+        $pdo = new Data();
+        $pdo->Connection();
 
+        try {
+            $query = "SELECT video_path, thumbnail_path FROM videos WHERE id = :video_id";
+            $stmt = $pdo->getConnection()->prepare($query);
+            $stmt->bindParam(':video_id', $videoId, PDO::PARAM_INT);
+            $stmt->execute();
+            $videoData = $stmt->fetch(PDO::FETCH_ASSOC);
 
+            if (!$videoData) {
+                return ['success' => false, 'message' => 'Vidéo non trouvée'];
+            }
+
+            if ($videoFile) {
+                $videoValidation = $this->validateVideo($videoFile);
+                if (!$videoValidation['success']) {
+                    return $videoValidation;
+                }
+
+                $newVideoFileName = uniqid() . '_' . basename($videoFile['name']);
+                move_uploaded_file($videoFile['tmp_name'], $this->uploadDir . $newVideoFileName);
+                $this->videopath = $this->uploadDir . $newVideoFileName;
+
+                // Supprimer l'ancien fichier vidéo
+                if (file_exists($videoData['video_path'])) {
+                    unlink($videoData['video_path']);
+                }
+            } else {
+                $this->videopath = $videoData['video_path']; // Conserver l'ancienne vidéo
+            }
+
+            // Gérer la mise à jour du fichier d'aperçu
+            if ($thumbnailFile) {
+                $thumbnailValidation = $this->validateThumbnail($thumbnailFile);
+                if (!$thumbnailValidation['success']) {
+                    return $thumbnailValidation;
+                }
+
+                $newThumbnailFileName = uniqid() . '_' . basename($thumbnailFile['name']);
+                move_uploaded_file($thumbnailFile['tmp_name'], $this->thumbnailDir . $newThumbnailFileName);
+                $this->thumbnailpath = $this->thumbnailDir . $newThumbnailFileName;
+
+                // Supprimer l'ancien aperçu
+                if (file_exists($videoData['thumbnail_path'])) {
+                    unlink($videoData['thumbnail_path']);
+                }
+            } else {
+                $this->thumbnailpath = $videoData['thumbnail_path']; // Conserver l'ancien aperçu
+            }
+
+            // Mettre à jour les détails de la vidéo dans la base de données
+            $query = "UPDATE videos 
+                      SET title = :title, 
+                          description = :description, 
+                          teacher_id = :teacher_id, 
+                          video_path = :video_path, 
+                          thumbnail_path = :thumbnail_path 
+                      WHERE id = :video_id";
+
+            $stmt = $pdo->getConnection()->prepare($query);
+            $stmt->execute([
+                ':title' => $title,
+                ':description' => $description,
+                ':teacher_id' => $teacherId,
+                ':video_path' => $this->videopath,
+                ':thumbnail_path' => $this->thumbnailpath,
+                ':video_id' => $videoId
+            ]);
+
+            // Mettre à jour les tags
+            $this->updateTags($videoId, $tags);
+
+            // Mettre à jour la catégorie
+            $this->updateCategory($videoId, $categoryId);
+
+            return ['success' => true, 'message' => 'Vidéo mise à jour avec succès !'];
+
+        } catch (PDOException $e) {
+            return ['success' => false, 'message' => 'Échec de la mise à jour : ' . $e->getMessage()];
+        }
+    }
+
+    private function updateTags($videoId, $tags) {
+        $pdo = new Data();
+        $pdo->Connection();
+
+        // Supprimer les anciens tags
+        $query = "DELETE FROM video_tags WHERE video_id = :video_id";
+        $stmt = $pdo->getConnection()->prepare($query);
+        $stmt->bindParam(':video_id', $videoId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Ajouter les nouveaux tags
+        foreach ($tags as $tagId) {
+            $query = "INSERT INTO video_tags (video_id, tag_id) VALUES (:video_id, :tag_id)";
+            $stmt = $pdo->getConnection()->prepare($query);
+            $stmt->execute([':video_id' => $videoId, ':tag_id' => $tagId]);
+        }
+    }
+
+    private function updateCategory($videoId, $categoryId) {
+        $pdo = new Data();
+        $pdo->Connection();
+
+        // Supprimer les anciennes catégories
+        $query = "DELETE FROM video_categories WHERE video_id = :video_id";
+        $stmt = $pdo->getConnection()->prepare($query);
+        $stmt->bindParam(':video_id', $videoId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        // Ajouter la nouvelle catégorie
+        if ($categoryId) {
+            $query = "INSERT INTO video_categories (video_id, category_id) VALUES (:video_id, :category_id)";
+            $stmt = $pdo->getConnection()->prepare($query);
+            $stmt->execute([':video_id' => $videoId, ':category_id' => $categoryId]);
+        }
+    }
+
+    
 
     public function addTagstovd($videoId, $tags) {
         $pdo = new Data();
@@ -291,6 +410,68 @@ class VideoHandler extends CourseContent {
 
 
 
+public function searchVideos($searchTerm) {
+    $pdo = new Data();
+    $pdo->Connection();
+
+    // Base query
+    $query = "SELECT v.*, u.first_name, u.last_name, u.avatar_path, u.role 
+              FROM videos v
+              INNER JOIN users u ON v.teacher_id = u.id
+              WHERE v.status != 'suspended' AND (v.title LIKE :search_term OR v.description LIKE :search_term)";
+    
+    $stmt = $pdo->getConnection()->prepare($query);
+    $searchTerm = '%' . $searchTerm . '%'; // Pour utiliser avec LIKE
+    $stmt->bindParam(':search_term', $searchTerm, PDO::PARAM_STR);
+    $stmt->execute();
+    $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Traitement similaire pour récupérer les learnings, catégories, tags, etc.
+    foreach ($videos as &$video) {
+       // Get learnings
+       $query = "SELECT learning FROM video_learnings WHERE video_id = :video_id";
+       $stmt = $pdo->getConnection()->prepare($query);
+       $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+       $stmt->execute();
+       $learning = $stmt->fetchAll(PDO::FETCH_COLUMN);
+       $video['learning'] = $learning;
+
+       // Get categories
+       $query = "SELECT c.name 
+                 FROM categories c
+                 INNER JOIN video_categories cc ON c.id = cc.category_id
+                 WHERE cc.video_id = :video_id";
+       $stmt = $pdo->getConnection()->prepare($query);
+       $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+       $stmt->execute();
+       $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+       $video['categories'] = $categories;
+
+       // Get tags
+       $query = "SELECT t.name 
+                 FROM tags t
+                 INNER JOIN video_tags ct ON t.id = ct.tag_id
+                 WHERE ct.video_id = :video_id";
+       $stmt = $pdo->getConnection()->prepare($query);
+       $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+       $stmt->execute();
+       $tags = $stmt->fetchAll(PDO::FETCH_COLUMN);
+       $video['tags'] = $tags;
+
+       // Get enrollments
+       $query = "SELECT COUNT(*) as enrollments FROM video_enrollments WHERE video_id = :video_id";
+       $stmt = $pdo->getConnection()->prepare($query);
+       $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+       $stmt->execute();
+       $enrollments = $stmt->fetch(PDO::FETCH_ASSOC);
+       $video['enrollments'] = $enrollments['enrollments'];
+   }
+
+    
+
+    return $videos;
+}
+
 
 
     public function afficher() {
@@ -347,32 +528,170 @@ class VideoHandler extends CourseContent {
     
         return $videos;
     }
+    
+public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
+    $pdo = new Data();
+    $pdo->Connection();
+    
+    // Calculate offset
+    $offset = ($page - 1) * $perPage;
+    
+    // Base query for counting total videos
+    $countQuery = "SELECT COUNT(*) as total 
+                   FROM videos v 
+                   WHERE v.status != 'suspended'";
+    
+    // Base query for fetching videos with pagination
+    $query = "SELECT v.*, u.first_name, u.last_name, u.avatar_path, u.role
+              FROM videos v
+              INNER JOIN users u ON v.teacher_id = u.id
+              WHERE v.status != 'suspended'";
+    
+    // If a category is provided, modify both queries
+    if ($category) {
+        $countQuery .= " AND v.id IN (
+            SELECT video_id FROM video_categories WHERE category_id = :category_id
+        )";
+        $query .= " AND v.id IN (
+            SELECT video_id FROM video_categories WHERE category_id = :category_id
+        )";
+    }
+    
+    // Add pagination
+    $query .= " LIMIT :limit OFFSET :offset";
+    
+    // Get total count
+    $countStmt = $pdo->getConnection()->prepare($countQuery);
+    if ($category) {
+        $countStmt->bindParam(':category_id', $category, PDO::PARAM_INT);
+    }
+    $countStmt->execute();
+    $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Prepare and execute the main query
+    $stmt = $pdo->getConnection()->prepare($query);
+    if ($category) {
+        $stmt->bindParam(':category_id', $category, PDO::PARAM_INT);
+    }
+    $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+    
+    $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Fetch additional data for each video
+    foreach ($videos as &$video) {
+        // Get learnings
+        $learningQuery = "SELECT learning FROM video_learnings WHERE video_id = :video_id";
+        $stmt = $pdo->getConnection()->prepare($learningQuery);
+        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $video['learning'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        // Get categories
+        $categoriesQuery = "SELECT c.name 
+                           FROM categories c
+                           INNER JOIN video_categories cc ON c.id = cc.category_id
+                           WHERE cc.video_id = :video_id";
+        $stmt = $pdo->getConnection()->prepare($categoriesQuery);
+        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $video['categories'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        // Get tags
+        $tagsQuery = "SELECT t.name 
+                      FROM tags t
+                      INNER JOIN video_tags ct ON t.id = ct.tag_id
+                      WHERE ct.video_id = :video_id";
+        $stmt = $pdo->getConnection()->prepare($tagsQuery);
+        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $video['tags'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        // Get enrollments
+        $enrollmentsQuery = "SELECT COUNT(*) as enrollments 
+                            FROM video_enrollments 
+                            WHERE video_id = :video_id";
+        $stmt = $pdo->getConnection()->prepare($enrollmentsQuery);
+        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
+        $stmt->execute();
+        $enrollments = $stmt->fetch(PDO::FETCH_ASSOC);
+        $video['enrollments'] = $enrollments['enrollments'];
+    }
+    
+    // Return both the videos and pagination information
+    return [
+        'videos' => $videos,
+        'pagination' => [
+            'currentPage' => $page,
+            'perPage' => $perPage,
+            'totalItems' => $totalCount,
+            'totalPages' => ceil($totalCount / $perPage)
+        ]
+    ];
+}
+
     public function afficherbyid($id) {
         $pdo = new Data();
         $pdo->Connection();
         $id = (int) $id;
-    
-        $query = "SELECT * FROM videos v
+        
+        $query = "SELECT v.*, u.first_name, u.last_name, u.avatar_path, u.role
+                  FROM videos v
                   INNER JOIN users u ON v.teacher_id = u.id
-                  WHERE v.id = :id AND ";
+                  WHERE v.id = :id";
         $stmt = $pdo->getConnection()->prepare($query);
         $stmt->bindParam(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
-    
+        
         if ($stmt->rowCount() > 0) {
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            $query = "SELECT learning FROM learnings WHERE video_id = :id";
+            
+            // Get learnings
+            $query = "SELECT learning FROM video_learnings WHERE video_id = :id";
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $learnings = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $result['learning'] = $learnings;
+            
+            // Get categories
+            $query = "SELECT c.id, c.name 
+                     FROM categories c
+                     INNER JOIN video_categories cc ON c.id = cc.category_id
+                     WHERE cc.video_id = :id";
+            $stmt = $pdo->getConnection()->prepare($query);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result['categories'] = $categories;
+            
+            // Get tags
+            $query = "SELECT t.id, t.name 
+                     FROM tags t
+                     INNER JOIN video_tags ct ON t.id = ct.tag_id
+                     WHERE ct.video_id = :id";
+            $stmt = $pdo->getConnection()->prepare($query);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $tags = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $result['tags'] = $tags;
+            
+            // Get enrollments
+            $query = "SELECT COUNT(*) as enrollments 
+                     FROM video_enrollments 
+                     WHERE video_id = :id";
+            $stmt = $pdo->getConnection()->prepare($query);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $enrollments = $stmt->fetch(PDO::FETCH_ASSOC);
+            $result['enrollments'] = $enrollments['enrollments'];
+            
             return $result;
         } else {
             return [];
         }
     }
-
 
 
 
@@ -462,11 +781,6 @@ class VideoHandler extends CourseContent {
         }
     }
 
-
-
-
-
-
 }
 
 class DocumentContent extends CourseContent {  
@@ -506,7 +820,6 @@ class DocumentContent extends CourseContent {
             ];  
         }  
     }  
-
     public function uploadFile($file) {  
         if ($file['error'] !== UPLOAD_ERR_OK) {  
             return "Error uploading file: " . $file['error'];  
@@ -794,12 +1107,9 @@ class DocumentContent extends CourseContent {
             $document['tags'] = $tags;
         }
     
-        return $documents ?: []; // Return empty array if no documents are found
+        return $documents ?: [];
     }
     
-
-
-
 
 
     public function getTeacherDocuments($teacherId) {

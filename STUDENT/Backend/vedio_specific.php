@@ -11,8 +11,10 @@ if (isset($_POST['idved'])) {
         var_dump($rejoindre);
         $documentContent = new VideoHandler('', '', 0);
         $message = $documentContent->enrollUser($user_id, $ved_id);
+        header("location:../Frontend/vedio.php?iddoc=$ved_id");
     } else {
         $message = 'Invalid request or not logged in as student.';
+
     }
     exit();
 } else {

@@ -37,15 +37,9 @@
                 </div>
                 
                 <div class="space-y-4">
-                    <a href="contact_support.php" class="block w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
-                        Contact Support
-                    </a>
-                    <a href="faq.php" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg transition duration-200">
-                        View FAQ
-                    </a>
-                    <form action="logout.php" method="POST" class="mt-4">
+                    <form action="../../Login/backend/logout.php" method="POST" class="mt-4">
                         <button type="submit" class="text-gray-500 hover:text-gray-700 font-medium">
-                            Sign Out
+                        Sign Out
                         </button>
                     </form>
                 </div>

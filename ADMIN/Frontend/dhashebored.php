@@ -6,9 +6,20 @@ require_once'../backend/get_All.php';
     //      header('location:../../login/frontend/singin.php');
     // exit(); 
     // }
+    if (!isset($_SESSION['client'])) {
+        header('location:../../login/frontend/singin.php');
+        exit(); 
+    }
+    
+    if ($_SESSION['client']['role'] != 'admin') {
+        header('location:../../login/frontend/singin.php');
+        exit(); 
+    }
     $data = new Admin();
    $teachers= $data->Afficher_teacher();
-   
+   $userHandler = new Admin(); // Assuming you have a UserHandler class
+$usersResponse = $userHandler->getAllUsersByStatus(); // Fetch all users
+$users = $usersResponse['data'] ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -161,7 +172,7 @@ require_once'../backend/get_All.php';
                     </div>
                 </div>
 
-                <!-- Users Section -->
+                            <!-- Users Section -->
                 <div id="users" class="section hidden">
                     <h2 class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">User Management</h2>
                     <div class="overflow-x-auto">
@@ -176,24 +187,45 @@ require_once'../backend/get_All.php';
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td class="py-2 px-4">Jane Smith</td>
-                                    <td class="py-2 px-4">jane.smith@example.com</td>
-                                    <td class="py-2 px-4">Student</td>
-                                    <td class="py-2 px-4">
-                                        <span class="px-2 py-1 text-xs font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>
-                                    </td>
-                                    <td class="py-2 px-4">
-                                        <button class="text-red-600 hover:text-red-900">Suspend</button>
-                                        <button class="text-blue-600 hover:text-blue-900 ml-4">Edit</button>
-                                    </td>
-                                </tr>
-                                <!-- More user rows... -->
+                                <?php foreach ($users as $user): ?>
+                                    <tr class="border-b border-gray-200 dark:border-gray-700">
+                                        <td class="py-2 px-4"><?php echo htmlspecialchars($user['first_name']) . " " . htmlspecialchars($user['last_name']); ?></td>
+                                        <td class="py-2 px-4"><?php echo htmlspecialchars($user['email']); ?></td>
+                                        <td class="py-2 px-4"><?php echo htmlspecialchars($user['role']); ?></td>
+                                        <td class="py-2 px-4">
+                                            <?php if ($user['status'] === 'active'): ?>
+                                                <span class="px-2 py-1 text-xs font-semibold leading-tight text-green-700 bg-green-100 rounded-full">Active</span>
+                                            <?php else: ?>
+                                                <span class="px-2 py-1 text-xs font-semibold leading-tight text-red-700 bg-red-100 rounded-full">Suspended</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td class="py-2 px-4 flex gap-2">
+                                            <?php if ($user['status'] === 'active'): ?>
+                                                <!-- Button to Suspend -->
+                                                <form action="../backend/change_status.php" method="POST">
+                                                    <input type="hidden" name="id_user" value="<?php echo htmlspecialchars($user['id']); ?>">
+                                                    <input type="hidden" name="status_dessision" value="0">
+                                                    <button type="submit" class="text-red-600 hover:text-red-900">
+                                                        <i class="fas fa-ban"></i> Suspend
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <!-- Button to Activate -->
+                                                <form action="../backend/change_status.php" method="POST">
+                                                    <input type="hidden" name="id_user" value="<?php echo htmlspecialchars($user['id']); ?>">
+                                                    <input type="hidden" name="status_dessision" value="1">
+                                                    <button type="submit" class="text-green-600 hover:text-green-900">
+                                                        <i class="fas fa-check-circle"></i> Activate
+                                                    </button>
+                                                </form>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
-
                 <!-- Courses Section -->
                 <div id="courses" class="section hidden">
                 <div class="mb-6">
@@ -486,7 +518,7 @@ require_once'../backend/get_All.php';
                                     <?php if ($teacher['status'] === 'active'): ?>
                                         <!-- Button to Suspend -->
                                         <form action="../backend/change_status.php" method="POST">
-                                            <input type="hidden" name="id_tech" value="<?php echo htmlspecialchars($teacher['id']); ?>">
+                                            <input type="hidden" name="id_user" value="<?php echo htmlspecialchars($teacher['id']); ?>">
                                             <input type="hidden" name="status_dessision" value="0">
                                             <button type="submit" class="text-red-600 hover:text-red-900">
                                                 <i class="fas fa-ban"></i> Suspend
@@ -495,7 +527,7 @@ require_once'../backend/get_All.php';
                                     <?php else: ?>
                                         <!-- Button to Activate -->
                                         <form action="../backend/change_status.php" method="POST">
-                                            <input type="hidden" name="id_tech" value="<?php echo htmlspecialchars($teacher['id']); ?>">
+                                            <input type="hidden" name="id_user" value="<?php echo htmlspecialchars($teacher['id']); ?>">
                                             <input type="hidden" name="status_dessision" value="1">
                                             <button type="submit" class="text-green-600 hover:text-green-900">
                                                 <i class="fas fa-check-circle"></i> Activate
@@ -527,7 +559,7 @@ require_once'../backend/get_All.php';
                         <?php foreach($teachers as $teacher): ?>
                             <?php if($teacher['is_approved'] ==='waiting'): ?>
                                 <tr class="border-b border-gray-200 dark:border-gray-700">
-                                <td class="py-2 px-4"><img src="../../<?php htmlspecialchars($teacher['avatar_path'])?>" alt="" class="w-6 h-6 rounded-lg"></td>
+                                <td class="py-2 px-4"><img src="../../<?php echo htmlspecialchars($teacher['avatar_path']); ?>" alt="" class="w-6 h-6 rounded-lg"></td>
                                 <td class="py-2 px-4"><?php echo htmlspecialchars($teacher['first_name'])." ".$teacher['last_name']; ?></td>
                                 <td class="py-2 px-4"><?php echo htmlspecialchars($teacher['email']); ?></td> ?></td>
                                     <td class="py-2 px-4"><?php echo htmlspecialchars($teacher['created_at']); ?></td>
@@ -555,19 +587,24 @@ require_once'../backend/get_All.php';
             </div>
         </div>
         </div>
+
         <script>
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            const isDark = document.documentElement.classList.contains('dark');
-            localStorage.setItem('darkMode', isDark);
-        }
 
-        if (localStorage.getItem('darkMode') === 'true' || 
-            (window.matchMedia('(prefers-color-scheme: dark)').matches && 
-            !localStorage.getItem('darkMode'))) {
-            document.documentElement.classList.add('dark');
-        }
 
+
+        function  switchTeacherTab(tab) {
+    if (tab === 'accepted') {
+        document.getElementById('acceptedTab').className = 'px-6 py-2 font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900';
+        document.getElementById('pendingTab').className = 'px-6 py-2 font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700';
+        document.getElementById('acceptedTeachers').classList.remove('hidden');
+        document.getElementById('pendingTeachers').classList.add('hidden');
+    } else {
+        document.getElementById('pendingTab').className = 'px-6 py-2 font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900';
+        document.getElementById('acceptedTab').className = 'px-6 py-2 font-medium rounded-lg transition-colors duration-200 ease-in-out focus:outline-none text-gray-600 bg-gray-100 dark:text-gray-400 dark:bg-gray-700';
+        document.getElementById('pendingTeachers').classList.remove('hidden');
+        document.getElementById('acceptedTeachers').classList.add('hidden');
+    }
+}
         function showSection(sectionId) {
             document.querySelectorAll('.section').forEach(section => {
                 section.classList.add('hidden');

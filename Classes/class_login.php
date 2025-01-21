@@ -12,7 +12,7 @@ class Authentication {
     
     public function login($username, $password) {
         $username = filter_var($username, FILTER_SANITIZE_STRING);
-        $stmt = $this->pdo->prepare("SELECT id, username, password FROM users WHERE username = ?");
+        $stmt = $this->pdo->getConnection()->prepare("SELECT id, username, password FROM users WHERE username = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch();
         

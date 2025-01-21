@@ -13,7 +13,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
 $role=$_POST['role']; 
 $user= new user($first_name,$last_name,$email,$password,$role);
 $user -> SetUser($first_name,$last_name,$email,$password,$role);
- header('location:../../index.php');
+ header('location:../../../../professor/Frontend/professor-waiting.php');
 
 }
 

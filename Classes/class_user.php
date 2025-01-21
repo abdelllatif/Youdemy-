@@ -29,6 +29,7 @@ class User {
     public function hashPassword() { 
         return password_hash($this->password, PASSWORD_DEFAULT);
     }
+
   
     public function SetUser() {
         $password_hash = $this->hashPassword(); 
@@ -75,17 +76,30 @@ class User {
                 if (password_verify($password, $user['password'])) {
                     $_SESSION['client'] = [
                         'id' => $user['id'],
-                        'role' => $user['role']
+                        'role' => $user['role'],
+                        'is_approved'=> $user['is_approved'],
+                        'status'=> $user['status']
                     ];
-
+                        
                     echo "Login successful!";
                     if ($user['role'] == 'admin') {
                         header('location:../../ADMIN/Frontend/dhashebored.php');
-                    } elseif ($user['role'] == 'teacher' && $user['is_approved'] == 'approved') {
+                    } elseif ($user['role'] == 'teacher' && $user['is_approved'] == 'approved' && $user['status'] == 'active') {
                         header('location:../../professor/Frontend/teacher.php');
-                    } elseif ($user['role'] == 'student') {
+
+                    } elseif ($user['role'] == 'teacher' && $user['is_approved'] == 'waiting') {
+                        header('location:../../professor/Frontend/professor-waiting.php');
+                    }
+                    elseif ($user['role'] == 'teacher' && $user['is_approved'] == 'rejected') {
+                        header('location:../../professor/Frontend/not_approved.php');
+                    }
+                    elseif ($user['role'] == 'student' && $user['status'] == 'active') {
                         header('location:../../index.php');
-                    } else {
+                    }
+                    elseif ($user['status'] == 'suspended') {
+                        header('location:../../STUDENT/Frontend/suspend.php');
+                    }
+                    else {
                         echo "Invalid user role.";
                         return false;
                     }
