@@ -11,7 +11,6 @@ class Admin extends User {
 
 
     
-    // User Management Methods
     public function validateTeacherAccount($teacherId,$is_pproved) {
         try {
             if($is_pproved==true){
@@ -165,7 +164,6 @@ class Admin extends User {
         }
     }
 
-     // Get total number of videos
      public function getTotalVideos() {
         $query = "SELECT COUNT(*) as total_videos FROM videos";
         $stmt = $this->pdo->getConnection()->prepare($query);
@@ -173,7 +171,7 @@ class Admin extends User {
         return $stmt->fetch(PDO::FETCH_ASSOC)['total_videos'];
     }
 
-    // Get total number of documents
+    
     public function getTotalDocuments() {
         $query = "SELECT COUNT(*) as total_documents FROM document";
         $stmt = $this->pdo->getConnection()->prepare($query);
@@ -181,7 +179,6 @@ class Admin extends User {
         return $stmt->fetch(PDO::FETCH_ASSOC)['total_documents'];
     }
 
-    // Get courses by category
     public function getCoursesByCategory() {
         $query = "
             SELECT c.name as category, COUNT(vc.video_id) + COUNT(dc.document_id) as total_courses
@@ -195,7 +192,6 @@ class Admin extends User {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Get top course by student count
     public function getTopCourse() {
         $query = "
             SELECT title, student_count FROM (
@@ -217,7 +213,6 @@ class Admin extends User {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Get top 3 teachers by course count
     public function getTopTeachers() {
         $query = "
             SELECT u.first_name, u.last_name, COUNT(v.id) + COUNT(d.id) as course_count
@@ -237,22 +232,18 @@ class Admin extends User {
         $pdo = new Data();
         $pdo->Connection();
         
-        // Check the current status of the course
         if ($type === 'video') {
             $query = "SELECT status FROM videos WHERE id = :courseId";
         } else if ($type === 'document') {
             $query = "SELECT status FROM document WHERE id = :courseId";
         }
         
-        // Get the current status of the course
         $stmt = $pdo->getConnection()->prepare($query);
         $stmt->bindParam(':courseId', $courseId, PDO::PARAM_INT);
         $stmt->execute();
         $course = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Determine whether to suspend or activate the course based on its current status
         if ($course['status'] === 'active') {
-            // If it's currently active, suspend it
             if ($type === 'video') {
                 $query = "UPDATE videos SET status = 'suspended', suspended_by = :role WHERE id = :courseId";
             } else if ($type === 'document') {

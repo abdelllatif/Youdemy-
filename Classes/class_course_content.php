@@ -40,6 +40,17 @@ class VideoHandler extends CourseContent {
     public function getContent() {
         return "Video: {$this->videopath}";
     }
+     
+
+
+
+//**************************************** */
+
+
+
+
+
+
 
     public function handleVideoUpload($videoFile, $thumbnailFile, $title, $description, $teacherId, $duration) {
         try {
@@ -86,9 +97,6 @@ class VideoHandler extends CourseContent {
             $pdo = new Data();
             $pdo->Connection();
     
-            // Log the input values
-            error_log("Adding category - Video ID: $videoId, Category ID: $categoryId");
-    
             $query = "INSERT INTO video_categories (video_id, category_id) 
                      VALUES (:video_id, :category_id)";
             
@@ -117,7 +125,6 @@ class VideoHandler extends CourseContent {
         $pdo = new Data();
         $pdo->Connection();
         
-        // Query to fetch videos
         $query = "SELECT v.*, u.first_name, u.last_name, u.avatar_path, u.role 
                   FROM videos v
                   INNER JOIN users u ON v.teacher_id = u.id
@@ -128,39 +135,31 @@ class VideoHandler extends CourseContent {
         $stmt->execute();
         $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-        // Fetch learning, categories, tags, and enrollments for each video
         foreach ($videos as &$video) {
-            // Fetch learning objectives
             $query = "SELECT learning FROM video_learnings WHERE video_id = :video_id";
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
             $stmt->execute();
             $learning = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $video['learning'] = $learning;
-    
-            // Fetch categories
             $query = "SELECT c.name 
-                      FROM categories c
-                      INNER JOIN video_categories cc ON c.id = cc.category_id
-                      WHERE cc.video_id = :video_id";
+            FROM categories c
+            INNER JOIN video_categories cc ON c.id = cc.category_id
+            WHERE cc.video_id = :video_id";
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
             $stmt->execute();
             $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $video['categories'] = $categories;
-    
-            // Fetch tags
             $query = "SELECT t.name 
-                      FROM tags t
-                      INNER JOIN video_tags ct ON t.id = ct.tag_id
-                      WHERE ct.video_id = :video_id";
+            FROM tags t
+            INNER JOIN video_tags ct ON t.id = ct.tag_id
+            WHERE ct.video_id = :video_id";
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
             $stmt->execute();
             $tags = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $video['tags'] = $tags;
-    
-            // Fetch enrollments count
             $query = "SELECT COUNT(*) as enrollments FROM video_enrollments WHERE video_id = :video_id";
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
@@ -168,8 +167,7 @@ class VideoHandler extends CourseContent {
             $enrollments = $stmt->fetch(PDO::FETCH_ASSOC);
             $video['enrollments'] = $enrollments['enrollments'];
         }
-    
-        return $videos ?: []; // Return empty array if no videos are found
+        return $videos ?: [];
     }
     
     public function updateVideo($videoId, $title, $description, $teacherId, $videoFile = null, $thumbnailFile = null, $duration = null, $tags = [], $categoryId = null) {
@@ -197,15 +195,12 @@ class VideoHandler extends CourseContent {
                 move_uploaded_file($videoFile['tmp_name'], $this->uploadDir . $newVideoFileName);
                 $this->videopath = $this->uploadDir . $newVideoFileName;
 
-                // Supprimer l'ancien fichier vidéo
                 if (file_exists($videoData['video_path'])) {
                     unlink($videoData['video_path']);
                 }
             } else {
-                $this->videopath = $videoData['video_path']; // Conserver l'ancienne vidéo
+                $this->videopath = $videoData['video_path']; 
             }
-
-            // Gérer la mise à jour du fichier d'aperçu
             if ($thumbnailFile) {
                 $thumbnailValidation = $this->validateThumbnail($thumbnailFile);
                 if (!$thumbnailValidation['success']) {
@@ -215,16 +210,13 @@ class VideoHandler extends CourseContent {
                 $newThumbnailFileName = uniqid() . '_' . basename($thumbnailFile['name']);
                 move_uploaded_file($thumbnailFile['tmp_name'], $this->thumbnailDir . $newThumbnailFileName);
                 $this->thumbnailpath = $this->thumbnailDir . $newThumbnailFileName;
-
-                // Supprimer l'ancien aperçu
                 if (file_exists($videoData['thumbnail_path'])) {
                     unlink($videoData['thumbnail_path']);
                 }
             } else {
-                $this->thumbnailpath = $videoData['thumbnail_path']; // Conserver l'ancien aperçu
+                $this->thumbnailpath = $videoData['thumbnail_path']; 
             }
 
-            // Mettre à jour les détails de la vidéo dans la base de données
             $query = "UPDATE videos 
                       SET title = :title, 
                           description = :description, 
@@ -242,11 +234,7 @@ class VideoHandler extends CourseContent {
                 ':thumbnail_path' => $this->thumbnailpath,
                 ':video_id' => $videoId
             ]);
-
-            // Mettre à jour les tags
             $this->updateTags($videoId, $tags);
-
-            // Mettre à jour la catégorie
             $this->updateCategory($videoId, $categoryId);
 
             return ['success' => true, 'message' => 'Vidéo mise à jour avec succès !'];
@@ -259,14 +247,10 @@ class VideoHandler extends CourseContent {
     private function updateTags($videoId, $tags) {
         $pdo = new Data();
         $pdo->Connection();
-
-        // Supprimer les anciens tags
         $query = "DELETE FROM video_tags WHERE video_id = :video_id";
         $stmt = $pdo->getConnection()->prepare($query);
         $stmt->bindParam(':video_id', $videoId, PDO::PARAM_INT);
         $stmt->execute();
-
-        // Ajouter les nouveaux tags
         foreach ($tags as $tagId) {
             $query = "INSERT INTO video_tags (video_id, tag_id) VALUES (:video_id, :tag_id)";
             $stmt = $pdo->getConnection()->prepare($query);
@@ -312,12 +296,10 @@ class VideoHandler extends CourseContent {
             error_log("Error adding tags: " . $e->getMessage());
         }
     }
-    function addLearning($videoId, $learning) {
+    public function addLearning($videoId, $learning) {
         $pdo = new Data();
         $pdo->Connection();
-        
         $query = "INSERT INTO video_learnings (video_id, learning) VALUES (:video_id, :learning)";
-        
         try {
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->execute([
@@ -398,74 +380,53 @@ class VideoHandler extends CourseContent {
         return ['success' => true];
     }
 
-
-
-//******************************************************************** */
-
-
-
-
-
-
-
-
-
 public function searchVideos($searchTerm) {
     $pdo = new Data();
     $pdo->Connection();
-
-    // Base query
     $query = "SELECT v.*, u.first_name, u.last_name, u.avatar_path, u.role 
-              FROM videos v
-              INNER JOIN users u ON v.teacher_id = u.id
-              WHERE v.status != 'suspended' AND (v.title LIKE :search_term OR v.description LIKE :search_term)";
+    FROM videos v
+    INNER JOIN users u ON v.teacher_id = u.id
+    WHERE v.status != 'suspended' AND (v.title LIKE :search_term OR v.description LIKE :search_term)";
     
     $stmt = $pdo->getConnection()->prepare($query);
-    $searchTerm = '%' . $searchTerm . '%'; // Pour utiliser avec LIKE
+    $searchTerm = '%' . $searchTerm . '%'; 
     $stmt->bindParam(':search_term', $searchTerm, PDO::PARAM_STR);
     $stmt->execute();
     $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Traitement similaire pour récupérer les learnings, catégories, tags, etc.
     foreach ($videos as &$video) {
-       // Get learnings
        $query = "SELECT learning FROM video_learnings WHERE video_id = :video_id";
        $stmt = $pdo->getConnection()->prepare($query);
        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
        $stmt->execute();
        $learning = $stmt->fetchAll(PDO::FETCH_COLUMN);
        $video['learning'] = $learning;
-
-       // Get categories
        $query = "SELECT c.name 
-                 FROM categories c
-                 INNER JOIN video_categories cc ON c.id = cc.category_id
-                 WHERE cc.video_id = :video_id";
+       FROM categories c
+       INNER JOIN video_categories cc ON c.id = cc.category_id
+       WHERE cc.video_id = :video_id";
        $stmt = $pdo->getConnection()->prepare($query);
        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
        $stmt->execute();
        $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
        $video['categories'] = $categories;
 
-       // Get tags
        $query = "SELECT t.name 
-                 FROM tags t
-                 INNER JOIN video_tags ct ON t.id = ct.tag_id
-                 WHERE ct.video_id = :video_id";
+       FROM tags t
+       INNER JOIN video_tags ct ON t.id = ct.tag_id
+       WHERE ct.video_id = :video_id";
        $stmt = $pdo->getConnection()->prepare($query);
        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
        $stmt->execute();
        $tags = $stmt->fetchAll(PDO::FETCH_COLUMN);
        $video['tags'] = $tags;
 
-       // Get enrollments
        $query = "SELECT COUNT(*) as enrollments FROM video_enrollments WHERE video_id = :video_id";
        $stmt = $pdo->getConnection()->prepare($query);
        $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
        $stmt->execute();
        $enrollments = $stmt->fetch(PDO::FETCH_ASSOC);
        $video['enrollments'] = $enrollments['enrollments'];
-   }
+    }
 
     
 
@@ -487,7 +448,6 @@ public function searchVideos($searchTerm) {
         $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
         foreach ($videos as &$video) {
-            // Get learnings
             $query = "SELECT learning FROM video_learnings WHERE video_id = :video_id";
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
@@ -495,7 +455,6 @@ public function searchVideos($searchTerm) {
             $learning = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $video['learning'] = $learning;
     
-            // Get categories
             $query = "SELECT c.name 
                       FROM categories c
                       INNER JOIN video_categories cc ON c.id = cc.category_id
@@ -506,7 +465,6 @@ public function searchVideos($searchTerm) {
             $categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $video['categories'] = $categories;
     
-            // Get tags
             $query = "SELECT t.name 
                       FROM tags t
                       INNER JOIN video_tags ct ON t.id = ct.tag_id
@@ -516,8 +474,6 @@ public function searchVideos($searchTerm) {
             $stmt->execute();
             $tags = $stmt->fetchAll(PDO::FETCH_COLUMN);
             $video['tags'] = $tags;
-    
-            // Get enrollments
             $query = "SELECT COUNT(*) as enrollments FROM video_enrollments WHERE video_id = :video_id";
             $stmt = $pdo->getConnection()->prepare($query);
             $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
@@ -533,21 +489,17 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
     $pdo = new Data();
     $pdo->Connection();
     
-    // Calculate offset
     $offset = ($page - 1) * $perPage;
     
-    // Base query for counting total videos
     $countQuery = "SELECT COUNT(*) as total 
                    FROM videos v 
                    WHERE v.status != 'suspended'";
     
-    // Base query for fetching videos with pagination
     $query = "SELECT v.*, u.first_name, u.last_name, u.avatar_path, u.role
               FROM videos v
               INNER JOIN users u ON v.teacher_id = u.id
               WHERE v.status != 'suspended'";
     
-    // If a category is provided, modify both queries
     if ($category) {
         $countQuery .= " AND v.id IN (
             SELECT video_id FROM video_categories WHERE category_id = :category_id
@@ -557,10 +509,8 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
         )";
     }
     
-    // Add pagination
     $query .= " LIMIT :limit OFFSET :offset";
     
-    // Get total count
     $countStmt = $pdo->getConnection()->prepare($countQuery);
     if ($category) {
         $countStmt->bindParam(':category_id', $category, PDO::PARAM_INT);
@@ -568,7 +518,6 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
     $countStmt->execute();
     $totalCount = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     
-    // Prepare and execute the main query
     $stmt = $pdo->getConnection()->prepare($query);
     if ($category) {
         $stmt->bindParam(':category_id', $category, PDO::PARAM_INT);
@@ -579,16 +528,13 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
     
     $videos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Fetch additional data for each video
     foreach ($videos as &$video) {
-        // Get learnings
         $learningQuery = "SELECT learning FROM video_learnings WHERE video_id = :video_id";
         $stmt = $pdo->getConnection()->prepare($learningQuery);
         $stmt->bindParam(':video_id', $video['id'], PDO::PARAM_INT);
         $stmt->execute();
         $video['learning'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
         
-        // Get categories
         $categoriesQuery = "SELECT c.name 
                            FROM categories c
                            INNER JOIN video_categories cc ON c.id = cc.category_id
@@ -598,7 +544,6 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
         $stmt->execute();
         $video['categories'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
         
-        // Get tags
         $tagsQuery = "SELECT t.name 
                       FROM tags t
                       INNER JOIN video_tags ct ON t.id = ct.tag_id
@@ -608,7 +553,6 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
         $stmt->execute();
         $video['tags'] = $stmt->fetchAll(PDO::FETCH_COLUMN);
         
-        // Get enrollments
         $enrollmentsQuery = "SELECT COUNT(*) as enrollments 
                             FROM video_enrollments 
                             WHERE video_id = :video_id";
@@ -619,7 +563,6 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
         $video['enrollments'] = $enrollments['enrollments'];
     }
     
-    // Return both the videos and pagination information
     return [
         'videos' => $videos,
         'pagination' => [
@@ -666,7 +609,6 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
             $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $result['categories'] = $categories;
             
-            // Get tags
             $query = "SELECT t.id, t.name 
                      FROM tags t
                      INNER JOIN video_tags ct ON t.id = ct.tag_id
@@ -677,7 +619,6 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
             $tags = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $result['tags'] = $tags;
             
-            // Get enrollments
             $query = "SELECT COUNT(*) as enrollments 
                      FROM video_enrollments 
                      WHERE video_id = :id";
@@ -750,7 +691,6 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
             $pdo = new Data();
             $pdo->Connection();
     
-            // Get the teacher ID from the document
             $query = $pdo->getConnection()->prepare("SELECT teacher_id FROM videos WHERE id = :video_id");
             $query->bindParam(':video_id', $video_id, PDO::PARAM_INT);
             $query->execute();
@@ -762,12 +702,10 @@ public function afficherbypaginate($page = 1, $perPage = 6, $category = null) {
     
             $teacher_id = $teacher['teacher_id'];
     
-            // Check if the enrollment already exists
             $query = $pdo->getConnection()->prepare("SELECT * FROM video_enrollments WHERE student_id = :student_id AND video_id = :video_id");
             $query->execute(['student_id' => $student_id, 'video_id' => $video_id]);
     
             if ($query->rowCount() == 0) {
-                // If it doesn't exist, add the enrollment
                 $query = $pdo->getConnection()->prepare("INSERT INTO video_enrollments (student_id, teacher_id, video_id) VALUES (:student_id, :teacher_id, :video_id)");
                 $query->execute(['student_id' => $student_id, 'teacher_id' => $teacher_id, 'video_id' => $video_id]);
     
@@ -918,7 +856,7 @@ class DocumentContent extends CourseContent {
         $query = "SELECT d.*, u.first_name, u.last_name, u.avatar_path, u.role
         FROM document d
         INNER JOIN users u ON d.teacher_id = u.id
-                  WHERE d.status != 'suspended'";
+        WHERE d.status != 'suspended'";
         $stmt = $pdo->getConnection()->prepare($query);
         $stmt->execute();
         
@@ -943,7 +881,6 @@ class DocumentContent extends CourseContent {
                 $categories = $categoryStmt->fetchAll(PDO::FETCH_COLUMN);
                 $document['categories'] = $categories;
     
-                // Fetch tags
                 $tagQuery = "SELECT t.name
                 FROM tags t
                 INNER JOIN document_tags ct ON t.id = ct.tag_id
@@ -1063,7 +1000,7 @@ class DocumentContent extends CourseContent {
         $pdo = new Data();
         $pdo->Connection();
         
-        // Query to fetch documents
+        
         $query = "SELECT d.*, u.first_name, u.last_name, u.avatar_path, u.role 
                   FROM document d
                   INNER JOIN users u ON d.teacher_id = u.id
@@ -1074,17 +1011,13 @@ class DocumentContent extends CourseContent {
         $stmt->execute();
         $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-        // Fetch learning, categories, and tags for each document
         foreach ($documents as &$document) {
-            // Fetch learning objectives
             $learningQuery = "SELECT learning FROM document_learnings WHERE document_id = :document_id";
             $learningStmt = $pdo->getConnection()->prepare($learningQuery);
             $learningStmt->bindParam(':document_id', $document['id'], PDO::PARAM_INT);
             $learningStmt->execute();
             $learning = $learningStmt->fetchAll(PDO::FETCH_COLUMN);
             $document['learning'] = $learning;
-    
-            // Fetch categories
             $categoryQuery = "SELECT c.name
                               FROM categories c
                               INNER JOIN document_categories cc ON c.id = cc.category_id
@@ -1095,7 +1028,6 @@ class DocumentContent extends CourseContent {
             $categories = $categoryStmt->fetchAll(PDO::FETCH_COLUMN);
             $document['categories'] = $categories;
     
-            // Fetch tags
             $tagQuery = "SELECT t.name
                          FROM tags t
                          INNER JOIN document_tags ct ON t.id = ct.tag_id

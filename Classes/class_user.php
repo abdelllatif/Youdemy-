@@ -133,7 +133,7 @@ class User {
             if ($user) {
                 return $user;
             } else {
-                return null; // Return null if user not found
+                return null; 
             }
         } catch (PDOException $e) {
             echo "Error: " . $e->getMessage();

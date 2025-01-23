@@ -7,23 +7,17 @@ class Tag {
     protected $pdo;
 
     public function __construct($tag=null) {
-        $data = new Data(); // Ensure the class name is capitalized if it is defined that way
+        $data = new Data(); 
         $this->pdo = $data->getConnection();
         $this->tag = $tag;
     }
 
     public function set_tags($tag) {
-        $this->tag = $tag; // Set the tag property
-
-        // Prepare the SQL query
+        $this->tag = $tag;
         $query = 'INSERT INTO tags(name) VALUES(:tag)';
         $stmt = $this->pdo->prepare($query);
-        
-        // Bind the parameter using bindValue instead of bind_param
-        $stmt->bindValue(':tag', $this->tag); // Use bindValue for PDO
-        
-        // Execute the statement and handle the result
-        if ($stmt->execute()) {
+        $stmt->bindValue(':tag', $this->tag); 
+            if ($stmt->execute()) {
             echo "Tags added successfully.";
         } else {
             echo "Error adding tags: " . implode(", ", $stmt->errorInfo());

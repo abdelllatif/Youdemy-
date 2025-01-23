@@ -15,9 +15,8 @@ require_once '../Backend/get_all_categorie.php';
 require_once '../Backend/get_all_documents.php';
 require_once '../../Classes/teacher.php';
 $teacherStats = new TeacherStatistics();
-$teacherId = $_SESSION['client']['id']; // Assuming you store teacher ID in session
+$teacherId = $_SESSION['client']['id']; 
 
-// Get statistics
 $totalVideoStudents = $teacherStats->getTotalVideoStudents($teacherId);
 $totalDocStudents = $teacherStats->getTotalDocumentStudents($teacherId);
 $totalVideos = $teacherStats->getTotalVideos($teacherId);

@@ -17,8 +17,8 @@ require_once'../backend/get_All.php';
     }
     $data = new Admin();
    $teachers= $data->Afficher_teacher();
-   $userHandler = new Admin(); // Assuming you have a UserHandler class
-$usersResponse = $userHandler->getAllUsersByStatus(); // Fetch all users
+   $userHandler = new Admin(); 
+$usersResponse = $userHandler->getAllUsersByStatus(); 
 $users = $usersResponse['data'] ?? [];
 ?>
 <!DOCTYPE html>
@@ -260,10 +260,8 @@ $users = $usersResponse['data'] ?? [];
                                         <input type="hidden" name="type" value="video">
                                         
                                         <?php if ($course['status'] === 'active'): ?>
-                                            <!-- If the course is active, show the "Suspend" button -->
                                             <button type="submit" class="text-red-600 hover:text-red-900">Suspend</button>
                                         <?php elseif ($course['status'] === 'suspended'): ?>
-                                            <!-- If the course is suspended, show the "Activate" button -->
                                             <button type="submit" class="text-green-600 hover:text-green-900">Activate</button>
                                         <?php endif; ?>
                                     </form>

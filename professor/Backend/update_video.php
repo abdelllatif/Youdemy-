@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
 
     $videoHandler = new VideoHandler();
 
-    // Handle video file upload
     $videoPath = '';
     if (!empty($_FILES['video']['name'])) {
         $videoTmpName = $_FILES['video']['tmp_name'];
@@ -24,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
         $videoPath = $existingVideo['video_path'] ?? '';
     }
 
-    // Handle thumbnail upload
     $thumbnailPath = '';
     if (!empty($_FILES['thumbnail']['name'])) {
         $thumbnailTmpName = $_FILES['thumbnail']['tmp_name'];
@@ -50,8 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
     }
     echo "<br>";
     
-    // Update video in database
-    $teacherId = 1; // Exemple de valeur, remplacez par l'ID réel de l'enseignant
+    $teacherId = 1; 
     if ($videoHandler->updateVideo(
             $video_id, 
             $title, 
@@ -59,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update'])) {
             $teacherId, 
             $videoPath, 
             $thumbnailPath, 
-            null, // ou une durée si vous en avez une
+            null, 
             $tags, 
             $categorie
         )) {

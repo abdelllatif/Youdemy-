@@ -5,13 +5,13 @@ require_once '../../Classes/class_course_content.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = $_POST['document_title'];
     $description = $_POST['document_description'];
-    $teacherId = 2; // Replace with actual teacher ID from session or form
+    $teacherId = 2; 
     $categories = isset($_POST['categorie']) ? (array)$_POST['categorie'] : [];
     $tags = isset($_POST['tags']) ? (array)$_POST['tags'] : [];
     $documentFile = $_FILES['document'];
     $learning=$_POST['learning'];
 
-    // Debugging information
+ 
     var_dump($title);
     echo "<br>";
     var_dump($description);
@@ -35,23 +35,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       ]);
       exit();
   }
-  // E
     $documentHandler = new DocumentContent($title, $description, $teacherId);
 
-    // Upload the document file
     $uploadResult = $documentHandler->uploadFile($documentFile);
 
     if (is_array($uploadResult) && $uploadResult['success']) {
         $documentId = $uploadResult['document_id'];
 
-        // Add categories
         if (!empty($categories)) {
             foreach ($categories as $categoryId) {
                 $documentHandler->addCategoriestodoc($documentId, $categoryId);
             }
         }
 
-        // Add tags
         if (!empty($tags)) {
             foreach ($tags as $tagId) {
                 $documentHandler->addTagstodoc($documentId, $tagId);

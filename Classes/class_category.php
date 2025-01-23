@@ -6,22 +6,19 @@ class categorie {
     protected $pdo;
 
     public function __construct($categorie = null) {
-        $data = new Data(); // Ensure the class name is capitalized if it is defined that way
+        $data = new Data(); 
         $this->pdo = $data->getConnection();
         $this->categorie = $categorie;
     }
 
     public function set_categorie($categorie) {
-        $this->categorie = $categorie; // Set the categorie property
+        $this->categorie = $categorie; 
 
-        // Prepare the SQL query
         $query = 'INSERT INTO categories(name) VALUES(:categorie)';
         $stmt = $this->pdo->prepare($query);
         
-        // Bind the parameter using bindValue instead of bind_param
-        $stmt->bindValue(':categorie', $this->categorie); // Use bindValue for PDO
+        $stmt->bindValue(':categorie', $this->categorie); 
         
-        // Execute the statement and handle the result
         if ($stmt->execute()) {
             echo "categories added successfully.";
         } else {
